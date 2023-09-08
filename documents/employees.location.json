@@ -1,0 +1,10 @@
+[{
+  "_id": {
+    "$oid": "64edba01fd0c7af31e1c8b18"
+  },
+  "Coordinate": {
+    "Latitude": 10.797056,
+    "Longitude": 106.6696704
+  },
+  "branch": "Lab 3, Phu Nhuan, Ho Chi Minh"
+}]
