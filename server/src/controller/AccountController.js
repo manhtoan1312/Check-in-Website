@@ -97,5 +97,51 @@ module.exports = {
       console.log(error);
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
+  },
+  changePasswordForgetPassword: async(req, res) => {
+    try{
+      const email = req.body.email
+      const password= req.body.password
+      const OTP = req.body.OTP
+      if (!(email && password && OTP)) {
+        res.status(400).json({
+          success: false,
+          message: "Yêu cầu nhập đủ các trường",
+        });
+      }
+      const accountService = new AccountService();
+      const result = await accountService.changePassword(email, password, OTP)
+      res.status(result.status).json({
+        success: result.success,
+        message: result.message
+      })
+    }
+    catch(error){
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
+  UpdatePassword: async(req, res) => {
+    try{
+      const email = req.user.email
+      const password= req.body.password
+      const OTP = req.body.OTP
+      if (!(email && password && OTP)) {
+        res.status(400).json({
+          success: false,
+          message: "Yêu cầu nhập đủ các trường",
+        });
+      }
+      const accountService = new AccountService();
+      const result = await accountService.changePassword(email, password, OTP)
+      res.status(result.status).json({
+        success: result.success,
+        message: result.message
+      })
+    }
+    catch(error){
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
   }
 };

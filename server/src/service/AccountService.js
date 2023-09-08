@@ -94,6 +94,61 @@ class AccountService {
       };
     }
   }
+  async changePassword(email, password, OTP) {
+    try {
+      findaccount = await accounts.findOne({ email: email });
+      if (findaccount) {
+        const now = new Date();
+        const otpCreateTime = new Date(findaccount.otp_requested_time);
+        const timeDifference = now - otpCreateTime;
+        if (timeDifference / (1000 * 60) < 5) {
+          if (await bcrypt.compare(OTP, findaccount.one_time_password)) {
+            await accounts.updateOne(
+              { email: email },
+              {
+                $set: {
+                  password: password,
+                  one_time_password: null,
+                  otp_requested_time: null,
+                },
+              }
+            );
+            return {
+              status: 200,
+              success: true,
+              message: "Đổi Mật Khẩu Thành Công, vui lòng đăng nhập lại",
+            };
+          }
+          else {
+            return {
+              status: 400,
+              success: false,
+              message: "Sai mã OTP",
+            };
+          }
+        } else {
+          return {
+            status: 400,
+            success: false,
+            message: "Mã OTP đã hết hạn",
+          };
+        }
+      } else {
+        return {
+          status: 400,
+          success: false,
+          message: "Email không tồn tại trong hệ thống",
+        };
+      }
+    } catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 500,
+        message: err,
+      };
+    }
+  }
 }
 
 module.exports = AccountService;
