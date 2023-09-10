@@ -65,20 +65,25 @@ class AccountService {
           name: finduser.name,
           OTP: OTP,
         };
-        const result = await sendMail(params);
-        if (result) {
-          return {
-            status: 200,
-            success: true,
-            message: "Đã gửi OTP, vui lòng kiểm tra trong email của bạn!!!",
-          };
-        } else {
-          return {
-            status: 500,
-            success: false,
-            message: "có lỗi trong quá trình gửi email. Vui lòng thử lại",
-          };
-        }
+        await sendMail(params);
+        // if (result) {
+        //   return {
+        //     status: 200,
+        //     success: true,
+        //     message: "Đã gửi OTP, vui lòng kiểm tra trong email của bạn!!!",
+        //   };
+        // } else {
+        //   return {
+        //     status: 500,
+        //     success: false,
+        //     message: "có lỗi trong quá trình gửi email. Vui lòng thử lại",
+        //   };
+        // }
+        return {
+          status: 200,
+          success: true,
+          message: "Đã gửi OTP, vui lòng kiểm tra trong email của bạn!!!",
+        };
       } else {
         return {
           status: 400,

@@ -12,7 +12,6 @@ const transporter = nodemailer.createTransport(MAIL_SETTINGS);
   
   module.exports.sendMail = async (params) => {
     try {
-        console.log(params)
       let info = await transporter.sendMail({
         from: MAIL_SETTINGS.auth.user,
         to: params.to, 
@@ -30,7 +29,6 @@ const transporter = nodemailer.createTransport(MAIL_SETTINGS);
      </div>
       `,
       });
-      console.log('Email sent:', info.response);
       return true;
     } catch (error) {
       console.log(error);

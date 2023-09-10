@@ -12,7 +12,6 @@ module.exports = {
           message: "Cần phải nhập đủ các trường yêu cầu",
         });
       }
-
       const account = await accounts.findOne({
         email,
       });
