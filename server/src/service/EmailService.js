@@ -1,7 +1,8 @@
 const nodemailer = require('nodemailer');
 
 const MAIL_SETTINGS = {
-  service: 'Gmail', 
+  host: '192.168.114.162', 
+  port: 1025,
   auth: {
     user: process.env.MAIL_EMAIL,
     pass: process.env.MAIL_PASSWORD,

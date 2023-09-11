@@ -3,7 +3,7 @@ const checkin = require("../model/checkin");
 const location = require("../model/location");
 const users = require("../model/users");
 const work_day = require("../model/work_day");
-const {CHECKIN_TIME ,MIN_CHECKIN_DISTANCE} =process.env;
+const { CHECKIN_TIME, MIN_CHECKIN_DISTANCE, FIRST_WORK_DAY } = process.env;
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   var R = 6371;
   var dLat = deg2rad(lat2 - lat1);
@@ -26,7 +26,6 @@ function deg2rad(deg) {
 async function checkAccountInWorkDay(accountIdToCheck, workday) {
   try {
     const workDay = await work_day.findOne({ day: workday });
-
     if (!workDay) {
       return {
         success: false,
@@ -74,7 +73,7 @@ class CheckinService {
       if (check) {
         const now = new Date();
         let time = now.getHours();
-
+        let message = `Checkin thành công tại ${check_location}`;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const account = await accounts.findOne({ email: user.email });
@@ -92,34 +91,53 @@ class CheckinService {
               };
             }
             //nếu chưa checkin
-            const usercheckin = {
-              employee: account._id,
-              late: time >= CHECKIN_TIME ? true : false,
-              fee: time >= CHECKIN_TIME ? (finduser.pine_times + 1) * 10000 : 0,
-            };
-            const newcheckin = await checkin.create(usercheckin);
-            //nếu checkin trễ
-            if(time >= CHECKIN_TIME){
-              await users.updateOne({_id: finduser._id},
-                {$set: {pine_times: finduser.pine_times + 1 >=4 ? 0 :finduser.pine_times + 1}}
-                )
-            }
-            //nếu ngày checkin chưa tồn tại
-            if (!result.success) {
-              const newWorkDay = { day: today, checkin: [newcheckin._id] };
-              await work_day.create(newWorkDay);
-            } 
-            //nếu ngày checkin chưa tồn tại
             else {
-              await work_day.updateOne(
-                { day: today },
-                { $push: { checkin: newcheckin._id } }
-              );
+              if (now.getMonth == 0 && now.getDate == FIRST_WORK_DAY) {
+                await checkin.deleteMany({});
+              }
+              const usercheckin = {
+                employee: account._id,
+                late: time >= CHECKIN_TIME ? true : false,
+                fee:
+                  time >= CHECKIN_TIME ? (finduser.pine_times + 1) * 10000 : 0,
+              };
+              const newcheckin = await checkin.create(usercheckin);
+              //nếu checkin trễ
+              if (time >= CHECKIN_TIME) {
+                await users.updateOne(
+                  { _id: finduser._id },
+                  {
+                    $set: {
+                      pine_times:
+                        finduser.pine_times + 1 >= 4
+                          ? 0
+                          : finduser.pine_times + 1,
+                    },
+                  }
+                );
+                message = `Bạn đã đi trễ. Checkin thành công tại ${check_location}`;
+              }
+              //nếu ngày checkin chưa tồn tại
+              if (!result.success) {
+                //nếu đây là ngày làm việc đầu năm
+                if (now.getMonth == 0 && now.getDate == FIRST_WORK_DAY) {
+                  await work_day.deleteMany({});
+                }
+                const newWorkDay = { day: today, checkin: [newcheckin._id] };
+                await work_day.create(newWorkDay);
+              }
+              //nếu ngày checkin đã tồn tại
+              else {
+                await work_day.updateOne(
+                  { day: today },
+                  { $push: { checkin: newcheckin._id } }
+                );
+              }
+              return {
+                success: true,
+                message: message,
+              };
             }
-            return {
-              success: true,
-              message: `Checkin thành công tại ${check_location}`,
-            };
           } else {
             return {
               success: false,

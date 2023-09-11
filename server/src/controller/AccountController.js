@@ -2,6 +2,7 @@ const accounts = require("../model/accounts");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const AccountService = require("../service/AccountService");
+const users = require("../model/users");
 module.exports = {
   login: async (req, res) => {
     try {
@@ -11,12 +12,15 @@ module.exports = {
           success: false,
           message: "Cần phải nhập đủ các trường yêu cầu",
         });
+        return;
       }
       const account = await accounts.findOne({
         email,
       });
 
-      if (account && (await bcrypt.compare(password, account.password))) {
+      const user = await users.findOne({_id: account.user})
+
+      if (user.enable && account && (await bcrypt.compare(password, account.password))) {
         const role = account.role;
         const token = jwt.sign(
           { account_id: account._id, email, role },
@@ -84,7 +88,23 @@ module.exports = {
           success: false,
           message: "Yêu cầu nhập email",
         });
+        return;
       }
+      const accountService = new AccountService();
+      const result = await accountService.forgotPassword(email)
+      res.status(result.status).json({
+        success: result.success,
+        message: result.message
+      })
+    }
+    catch(error){
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
+  getOTP: async(req,res) => {
+    try{
+      const email = req.user.email
       const accountService = new AccountService();
       const result = await accountService.forgotPassword(email)
       res.status(result.status).json({
@@ -107,6 +127,7 @@ module.exports = {
           success: false,
           message: "Yêu cầu nhập đủ các trường",
         });
+        return;
       }
       const accountService = new AccountService();
       const result = await accountService.changePassword(email, password, OTP)
@@ -130,6 +151,7 @@ module.exports = {
           success: false,
           message: "Yêu cầu nhập đủ các trường",
         });
+        return;
       }
       const accountService = new AccountService();
       const result = await accountService.changePassword(email, password, OTP)

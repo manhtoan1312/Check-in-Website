@@ -7,7 +7,11 @@ account_router.post("/login", AccountController.login);
 account_router.post("/register", verifyToken, AccountController.register);
 
 account_router.post("/forgot-password", AccountController.forgetPassword);
-
+account_router.get(
+  "/update-infor/get-OTP",
+  verifyToken,
+  AccountController.getOTP
+);
 account_router.post(
   "/forgot-password/update",
   AccountController.changePasswordForgetPassword

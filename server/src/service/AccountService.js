@@ -43,16 +43,18 @@ class AccountService {
       };
     }
   }
+  
   async forgotPassword(email) {
     try {
       const findaccount = await accounts.findOne({ email: email });
-      if (findaccount) {
+      const user = await users.findOne({_id: findaccount.user})
+      if (findaccount && user.enable) {
         const OTP = generateOTP();
         const now = new Date();
         const today = now.toISOString();
         const salt = bcrypt.genSaltSync(10);
 
-        const updateAccount = await accounts.updateOne(
+        await accounts.updateOne(
           { email: email },
           {
             one_time_password: bcrypt.hashSync(OTP, salt),
@@ -66,23 +68,10 @@ class AccountService {
           OTP: OTP,
         };
         await sendMail(params);
-        // if (result) {
-        //   return {
-        //     status: 200,
-        //     success: true,
-        //     message: "Đã gửi OTP, vui lòng kiểm tra trong email của bạn!!!",
-        //   };
-        // } else {
-        //   return {
-        //     status: 500,
-        //     success: false,
-        //     message: "có lỗi trong quá trình gửi email. Vui lòng thử lại",
-        //   };
-        // }
         return {
           status: 200,
           success: true,
-          message: "Đã gửi OTP, vui lòng kiểm tra trong email của bạn!!!",
+          message: "OTP đã được gửi, vui lòng kiểm tra hộp thư của bạn!!",
         };
       } else {
         return {
@@ -92,27 +81,31 @@ class AccountService {
         };
       }
     } catch (err) {
+      console.log(err)
       return {
         status: 500,
         success: false,
-        message: "có lỗi xảy ra",
+        message: "có lỗi trong quá trình gửi email. Vui lòng thử lại",
       };
     }
   }
+
   async changePassword(email, password, OTP) {
     try {
-      findaccount = await accounts.findOne({ email: email });
-      if (findaccount) {
+      const findaccount = await accounts.findOne({ email: email });
+      const user = await users.findOne({_id: findaccount.user})
+      if (findaccount && user.enable) {
         const now = new Date();
         const otpCreateTime = new Date(findaccount.otp_requested_time);
         const timeDifference = now - otpCreateTime;
         if (timeDifference / (1000 * 60) < 5) {
           if (await bcrypt.compare(OTP, findaccount.one_time_password)) {
+            const salt = bcrypt.genSaltSync(10);
             await accounts.updateOne(
               { email: email },
               {
                 $set: {
-                  password: password,
+                  password: bcrypt.hashSync(password, salt),
                   one_time_password: null,
                   otp_requested_time: null,
                 },
@@ -121,7 +114,7 @@ class AccountService {
             return {
               status: 200,
               success: true,
-              message: "Đổi Mật Khẩu Thành Công, vui lòng đăng nhập lại",
+              message: "Thay đổi Mật Khẩu Thành Công, vui lòng đăng nhập lại",
             };
           }
           else {
