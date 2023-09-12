@@ -53,7 +53,7 @@ class CheckinService {
   async checkin(user, userlocation) {
     try {
       const { latitude, longitude } = userlocation;
-      const locates = await location.find();
+      const locates = await location.find({enable:true});
       let check = false;
       let check_location;
       locates.forEach((locate) => {

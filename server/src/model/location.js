@@ -6,6 +6,7 @@ const locationSchema = new mongoose.Schema({
     Longitude: { type: Number, require: true },
   },
   branch: { type: String, default: null},
+  enable:{type:Boolean, default: true}
 });
 
 module.exports = mongoose.model("locations", locationSchema);

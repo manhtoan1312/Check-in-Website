@@ -22,4 +22,15 @@ account_router.post(
   verifyToken,
   AccountController.UpdatePassword
 );
+account_router.post(
+  "/update-infor",
+  verifyToken,
+  AccountController.UpdateInformation
+);
+
+account_router.get("/get-all-user", verifyToken, AccountController.getAllUsers);
+account_router.get("/get-all-old-user", verifyToken, AccountController.getAllOldUsers);
+account_router.delete("/delete-user/:id", verifyToken, AccountController.deleteUser);
+account_router.delete("/permanently-delete/:id", verifyToken, AccountController.permanentlyDeletUser);
+account_router.get("/restore-user/:id", verifyToken, AccountController.restoreUser);
 module.exports = account_router;

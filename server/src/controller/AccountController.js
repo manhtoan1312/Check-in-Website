@@ -18,9 +18,13 @@ module.exports = {
         email,
       });
 
-      const user = await users.findOne({_id: account.user})
+      const user = await users.findOne({ _id: account.user });
 
-      if (user.enable && account && (await bcrypt.compare(password, account.password))) {
+      if (
+        user.enable &&
+        account &&
+        (await bcrypt.compare(password, account.password))
+      ) {
         const role = account.role;
         const token = jwt.sign(
           { account_id: account._id, email, role },
@@ -41,6 +45,7 @@ module.exports = {
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
   },
+
   register: async (req, res) => {
     const user = req.user;
     if (user.role == "MANAGER") {
@@ -76,14 +81,20 @@ module.exports = {
         return;
       }
     } else {
-      res.status(403).json({ success: false, message: "Bạn không có quyền truy cập chức năng này" });
+      res
+        .status(403)
+        .json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
       return;
     }
   },
-  forgetPassword: async(req,res) => {
-    try{
-      const email = req.body.email
-      if (!(email)) {
+
+  forgetPassword: async (req, res) => {
+    try {
+      const email = req.body.email;
+      if (!email) {
         res.status(400).json({
           success: false,
           message: "Yêu cầu nhập email",
@@ -91,37 +102,37 @@ module.exports = {
         return;
       }
       const accountService = new AccountService();
-      const result = await accountService.forgotPassword(email)
+      const result = await accountService.forgotPassword(email);
       res.status(result.status).json({
         success: result.success,
-        message: result.message
-      })
-    }
-    catch(error){
+        message: result.message,
+      });
+    } catch (error) {
       console.log(error);
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
   },
-  getOTP: async(req,res) => {
-    try{
-      const email = req.user.email
+
+  getOTP: async (req, res) => {
+    try {
+      const email = req.user.email;
       const accountService = new AccountService();
-      const result = await accountService.forgotPassword(email)
+      const result = await accountService.forgotPassword(email);
       res.status(result.status).json({
         success: result.success,
-        message: result.message
-      })
-    }
-    catch(error){
+        message: result.message,
+      });
+    } catch (error) {
       console.log(error);
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
   },
-  changePasswordForgetPassword: async(req, res) => {
-    try{
-      const email = req.body.email
-      const password= req.body.password
-      const OTP = req.body.OTP
+
+  changePasswordForgetPassword: async (req, res) => {
+    try {
+      const email = req.body.email;
+      const password = req.body.password;
+      const OTP = req.body.OTP;
       if (!(email && password && OTP)) {
         res.status(400).json({
           success: false,
@@ -130,22 +141,22 @@ module.exports = {
         return;
       }
       const accountService = new AccountService();
-      const result = await accountService.changePassword(email, password, OTP)
+      const result = await accountService.changePassword(email, password, OTP);
       res.status(result.status).json({
         success: result.success,
-        message: result.message
-      })
-    }
-    catch(error){
+        message: result.message,
+      });
+    } catch (error) {
       console.log(error);
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
   },
-  UpdatePassword: async(req, res) => {
-    try{
-      const email = req.user.email
-      const password= req.body.password
-      const OTP = req.body.OTP
+
+  UpdatePassword: async (req, res) => {
+    try {
+      const email = req.user.email;
+      const password = req.body.password;
+      const OTP = req.body.OTP;
       if (!(email && password && OTP)) {
         res.status(400).json({
           success: false,
@@ -154,13 +165,161 @@ module.exports = {
         return;
       }
       const accountService = new AccountService();
-      const result = await accountService.changePassword(email, password, OTP)
+      const result = await accountService.changePassword(email, password, OTP);
       res.status(result.status).json({
         success: result.success,
-        message: result.message
-      })
+        message: result.message,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
-    catch(error){
+  },
+
+  UpdateInformation: async (req, res) => {
+    try {
+      const email = req.user.email;
+      const name = req.body.name;
+      const gender = req.body.gender;
+      const phone = req.body.phone;
+      const address = req.body.address;
+
+      const accountService = new AccountService();
+      const result = await accountService.UpdateInformation(
+        email,
+        name,
+        gender,
+        phone,
+        address
+      );
+      res.status(result.status).json({
+        success: result.success,
+        message: result.message,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
+  getAllUsers: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const accountService = new AccountService();
+        const result = await accountService.getAllUsers();
+        if (result?.success) {
+          res.status(200).json(result?.data);
+          return;
+        } else {
+          res.status(400).json({ success: false, message: result?.message });
+          return;
+        }
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
+
+  getAllOldUsers: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const accountService = new AccountService();
+        const result = await accountService.getAllOldUsers();
+        if (result?.success) {
+          res.status(200).json(result?.data);
+          return;
+        } else {
+          res.status(400).json({ success: false, message: result?.message });
+          return;
+        }
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
+
+  deleteUser: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const id = req.params.id;
+        const accountService = new AccountService();
+        const result = await accountService.deleteUser(id);
+        res.status(result.status).json({
+          success: result.success,
+          message: result.message,
+        });
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
+
+  restoreUser: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const id = req.params.id;
+        const accountService = new AccountService();
+        const result = await accountService.RestoreUser(id);
+        res.status(result.status).json({
+          success: result.success,
+          message: result.message,
+        });
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
+
+  permanentlyDeletUser: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const id = req.params.id;
+        const accountService = new AccountService();
+        const result = await accountService.permanentlyDeletUser(id);
+        res.status(result.status).json({
+          success: result.success,
+          message: result.message,
+        });
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
       console.log(error);
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
