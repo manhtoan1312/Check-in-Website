@@ -108,6 +108,25 @@ class LocationService {
         };
       }
   }
+
+  async searchLocation(key){
+    try {
+      const translate = key.replace(/\+/g," ")
+      const result = await location.find({branch: {$regex: translate, option:"$i"}})
+      return {
+        success:true,
+        data: result
+      }
+      }
+     catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 500,
+        message: "có lỗi xảy ra",
+      };
+    }
+  }
 }
 
 module.exports = LocationService;

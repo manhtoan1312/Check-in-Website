@@ -149,6 +149,32 @@ class AccountService {
     }
   }
 
+  async getPersonalInformation(email) {
+    try {
+      const findaccount = await accounts.findOne({ email: email });
+      const user = await users.findOne({ _id: findaccount.user });
+      if (user) {
+        return {
+          success: true,
+          status: 200,
+          message: user,
+        };
+      } else {
+        return {
+          success: false,
+          status: 400,
+          message: "không tìm thấy thông tin trong hệ thống",
+        };
+      }
+    } catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 400,
+        message: "Dữ liệu không đúng định dạng!!!",
+      };
+    }
+  }
   async UpdateInformation(email, name, gender, phone, address) {
     try {
       const findaccount = await accounts.findOne({ email: email });
@@ -190,16 +216,23 @@ class AccountService {
         {
           $unwind: "$user",
         },
+        {
+          $match: {
+            "user.enable": true,
+          },
+        },
+        {
+          $project: {
+            password: 0,
+            one_time_password: 0,
+            otp_requested_time: 0,
+          },
+        },
       ]);
-      const allActiveAccount = allAccount.filter((acc) => acc.user.enable);
-      const allActiveAccountWithoutPassword = allActiveAccount.map((acc) => {
-        const { password, ...rest } = acc;
-        return rest;
-      });
       return {
         success: true,
         status: 200,
-        data: allActiveAccountWithoutPassword,
+        data: allAccount,
       };
     } catch (err) {
       console.log(err);
@@ -209,6 +242,75 @@ class AccountService {
         message: "có lỗi xảy ra",
       };
     }
+  }
+  async SearchActiveAccount(key) {
+    const translate = key.replace(/\+/g, " ");
+    const findAccounts = await accounts.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $match: {
+          $or: [
+            { "email": { $regex: translate, $options: "i" } },
+            { "user.name": { $regex: translate, $options: "i" } },
+          ],
+          "user.enable": true,
+        },
+      },
+      {
+        $project: {
+          password: 0,
+          one_time_password: 0,
+          otp_requested_time: 0,
+        },
+      },
+    ]);
+
+    return findAccounts;
+  }
+
+  async SearchUnactiveAccount(key) {
+    const translate = key.replace(/\+/g, " ");
+    const findAccounts = await accounts.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $match: {
+          $or: [
+            { "user.email": { $regex: translate, $options: "i" } },
+            { "user.name": { $regex: translate, $options: "i" } },
+          ],
+          "user.enable": false,
+        },
+      },
+      {
+        $project: {
+          password: 0,
+          one_time_password: 0,
+          otp_requested_time: 0,
+        },
+      },
+    ]);
+
+    return findAccounts;
   }
 
   async getAllOldUsers() {
@@ -225,20 +327,24 @@ class AccountService {
         {
           $unwind: "$user",
         },
+        {
+          $match: {
+            "user.enable": false,
+          },
+        },
+        {
+          $project: {
+            password: 0,
+            one_time_password: 0,
+            otp_requested_time: 0,
+          },
+        },
       ]);
-      console.log(allAccount);
-      const allUnactiveAccount = allAccount.filter((acc) => !acc.user.enable);
-      console.log(allUnactiveAccount);
-      const allUnactiveAccountWithoutPassword = allUnactiveAccount.map(
-        (acc) => {
-          const { password, ...rest } = acc;
-          return rest;
-        }
-      );
+
       return {
         success: true,
         status: 200,
-        data: allUnactiveAccountWithoutPassword,
+        data: allAccount,
       };
     } catch (err) {
       console.log(err);

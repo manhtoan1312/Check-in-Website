@@ -81,12 +81,10 @@ module.exports = {
         return;
       }
     } else {
-      res
-        .status(403)
-        .json({
-          success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
-        });
+      res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền truy cập chức năng này",
+      });
       return;
     }
   },
@@ -175,7 +173,20 @@ module.exports = {
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
   },
-
+  getPersonalInformation: async (req, res) => {
+    try {
+      const email = req.user.email;
+      const accountService = new AccountService();
+      const result = await accountService.getPersonalInformation(email);
+      res.status(result.status).json({
+        success: result.success,
+        message: result.message,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
   UpdateInformation: async (req, res) => {
     try {
       const email = req.user.email;
@@ -323,5 +334,52 @@ module.exports = {
       console.log(error);
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
-  }
+  },
+
+  searchActiveEmployees: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const key = req.params.key;
+        const accountService = new AccountService();
+        const result = await accountService.SearchActiveAccount(key);
+        res.status(200).json({
+          result,
+        });
+        return;
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
+  searchUnActiveEmployees: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const key = req.params.key;
+        const accountService = new AccountService();
+        const result = await accountService.SearchUnactiveAccount(key);
+        res.status(200).json({
+          result,
+        });
+        return;
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
 };

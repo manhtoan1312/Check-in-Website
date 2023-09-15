@@ -34,4 +34,6 @@ location_router.get(
   LocationController.restoreLocation
 );
 
+location_router.get('/search/:key',verifyToken, LocationController.searchLocation)
+
 module.exports = location_router;

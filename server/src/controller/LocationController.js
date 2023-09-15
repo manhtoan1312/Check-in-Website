@@ -142,4 +142,27 @@ module.exports = {
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
   },
+  searchLocation: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const key = req.params.key;
+        const locationService = new LocationService();
+        const result = await locationService.searchLocation(key)
+        res.status(result.status).json({
+          success: result.success,
+          message: result.data,
+        });
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  }
 };

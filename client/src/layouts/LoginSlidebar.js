@@ -1,4 +1,4 @@
-import img from "~/image/icon-login.png";
+import img from "~/Assets/image/icon-login.png";
 
 function LoginSlidebar({children}) {
   return (

@@ -53,7 +53,7 @@ class CheckinService {
   async checkin(user, userlocation) {
     try {
       const { latitude, longitude } = userlocation;
-      const locates = await location.find({enable:true});
+      const locates = await location.find({ enable: true });
       let check = false;
       let check_location;
       locates.forEach((locate) => {
@@ -69,7 +69,7 @@ class CheckinService {
           return;
         }
       });
-      //nếu trong phạm vi các chi nhánh của công ty
+      //checking in in a valid area
       if (check) {
         const now = new Date();
         let time = now.getHours();
@@ -78,19 +78,19 @@ class CheckinService {
         today.setHours(0, 0, 0, 0);
         const account = await accounts.findOne({ email: user.email });
         const finduser = await users.findOne({ _id: account.user });
-        //token còn tồn tại
+        //tokens still exist
         if (account && finduser) {
           const result = await checkAccountInWorkDay(account._id, today);
-          //không xảy ra lỗi
+          //not error
           if (!result.error) {
-            //nếu đã checkin trong ngày
+            //ìf checked in
             if (result.success && result.checked) {
               return {
                 success: false,
                 message: "Bạn đã checkin vào ngày hôm nay!!!",
               };
             }
-            //nếu chưa checkin
+            //if Haven't checked in yet
             else {
               if (now.getMonth == 0 && now.getDate == FIRST_WORK_DAY) {
                 await checkin.deleteMany({});
@@ -102,7 +102,7 @@ class CheckinService {
                   time >= CHECKIN_TIME ? (finduser.pine_times + 1) * 10000 : 0,
               };
               const newcheckin = await checkin.create(usercheckin);
-              //nếu checkin trễ
+              //checkin late
               if (time >= CHECKIN_TIME) {
                 await users.updateOne(
                   { _id: finduser._id },
@@ -117,16 +117,17 @@ class CheckinService {
                 );
                 message = `Bạn đã đi trễ. Checkin thành công tại ${check_location}`;
               }
-              //nếu ngày checkin chưa tồn tại
+              //if checkin date does not exist yet
               if (!result.success) {
-                //nếu đây là ngày làm việc đầu năm
+                //If this is the first working day of the year
                 if (now.getMonth == 0 && now.getDate == FIRST_WORK_DAY) {
                   await work_day.deleteMany({});
+                  await checkin.deleteMany({});
                 }
                 const newWorkDay = { day: today, checkin: [newcheckin._id] };
                 await work_day.create(newWorkDay);
               }
-              //nếu ngày checkin đã tồn tại
+              //if checkin date already exists
               else {
                 await work_day.updateOne(
                   { day: today },

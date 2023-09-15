@@ -5,7 +5,7 @@ const work_day = require("../model/work_day");
 const ExcelJS = require("exceljs");
 
 class StatisticService {
-  async getPersonalWorkday(email, month) {
+  async getPersonalWorkday(email, month, start, end) {
     try {
       const findAccount = await accounts.findOne({ email: email });
 
@@ -18,8 +18,8 @@ class StatisticService {
 
       const now = new Date();
       const year = now.getFullYear().toString();
-      const startDate = new Date(year, month - 1, 1, 0, 0, 0);
-      const endDate = new Date(year, month, 1, 0, 0, 0);
+      const startDate = start ? start : new Date(year, month - 1, 1, 0, 0, 0);
+      const endDate = end ? end : new Date(year, month, 1, 0, 0, 0);
       let totalAbsentDays = 0;
       let totalLeaveDays = 0;
       let totalFee = 0;
@@ -66,6 +66,7 @@ class StatisticService {
       return {
         success: true,
         data: {
+          email: email,
           detail: result,
           summary: {
             totalAbsentDays,
@@ -82,12 +83,13 @@ class StatisticService {
       };
     }
   }
-  async getMonthlyStatistics(month) {
+
+  async getMonthlyStatistics(month, start, end) {
     try {
       const now = new Date();
       const year = now.getFullYear().toString();
-      const startDate = new Date(year, month - 1, 1, 0, 0, 0);
-      const endDate = new Date(year, month, 1, 0, 0, 0);
+      const startDate = start ? start : new Date(year, month - 1, 1, 0, 0, 0);
+      const endDate = end ? end : new Date(year, month, 1, 0, 0, 0);
       const enabledUsers = await users.find({ enable: true });
       if (enabledUsers) {
         const workDaysInMonth = await work_day
@@ -179,6 +181,7 @@ class StatisticService {
               name: user.name,
               email: check.employee.email,
               fee: check.fee,
+              time: check.time,
             };
 
             if (check.late) {
@@ -228,12 +231,11 @@ class StatisticService {
           name: user.name,
           email: "",
           totalLeaveDays: 0,
-          totalAbsentDays: 0,
+          totalLateDays: 0,
           totalFee: 0,
         };
 
         for (const workDay of workDaysInMonth) {
-          const date = workDay.day;
           const checkins = workDay.checkin;
           const userCheckins = checkins.filter((check) =>
             check.employee.user.equals(user._id)
@@ -243,13 +245,13 @@ class StatisticService {
             userStats.totalLeaveDays += 1;
           } else {
             if (userCheckins[0].late) {
-              userStats.totalAbsentDays += 1;
+              userStats.totalLateDays += 1;
             }
             userStats.totalFee += userCheckins[0].fee;
           }
         }
-
-        userStats.email = await accounts.findOne({ user: user._id }).email;
+        const account = await accounts.findOne({ user: user._id });
+        userStats.email = account.email;
 
         monthlyStatistics.push(userStats);
       }
@@ -267,29 +269,244 @@ class StatisticService {
     }
   }
 
-  async ExportExcelFileForAllEmployees(month) {
+  async exportPersonalExcelFile(email, month, start, end) {
     try {
-      const result = await this.getMonthlyStatistics(month);
+      const result = await this.getPersonalWorkday(email, month, start, end);
+      if (result.success) {
+        const detail = result.data.detail;
+        const summary = result.data.summary;
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Statistic");
+        worksheet.columns = [
+          { header: "Day", key: "day", width: 32 },
+          { header: "Leave", key: "leave", width: 10 },
+          { header: "Late", key: "late", width: 10 },
+          { header: "Time", key: "time", width: 20 },
+          { header: "Fine", key: "fee", width: 20 },
+        ];
+
+        worksheet.getRow(1).font = { bold: true };
+        detail.forEach((item) => {
+          const dateTimeString = item.day.toString();
+          const datePart = dateTimeString.slice(0, 10);
+          worksheet.addRow({
+            day: datePart,
+            leave: item.off,
+            late: item.late,
+            time: item.time,
+            fee: item.fee,
+          });
+        });
+
+        const summarysite = detail.length + 3;
+        worksheet.getCell(`A${summarysite}`).value = "Total Absent Days:";
+        worksheet.getCell(`A${summarysite + 1}`).value = "Total Ontime Days:";
+        worksheet.getCell(`A${summarysite + 2}`).value = "Total Days Off:";
+        worksheet.getCell(`A${summarysite + 3}`).value = "Total Fine:";
+        worksheet.mergeCells(`A${summarysite}:C${summarysite}`);
+        worksheet.mergeCells(`A${summarysite + 1}:C${summarysite + 1}`);
+        worksheet.mergeCells(`A${summarysite + 2}:C${summarysite + 2}`);
+        worksheet.mergeCells(`A${summarysite + 3}:C${summarysite + 3}`);
+        for (let i = 0; i < 4; i++) {
+          const cell = worksheet.getCell(`A${summarysite + i}`);
+          cell.font = { bold: true };
+        }
+        worksheet.getCell(`D${summarysite}`).value = summary.totalAbsentDays;
+        worksheet.getCell(`D${summarysite + 1}`).value =
+          summarysite - 3 - summary.totalAbsentDays - summary.totalLeaveDays;
+        worksheet.getCell(`D${summarysite + 2}`).value = summary.totalLeaveDays;
+        worksheet.getCell(`D${summarysite + 3}`).value = summary.totalFee;
+        return {
+          success: true,
+          data: workbook,
+        };
+      }
+    } catch (error) {
+      console.error(error);
+      return {
+        success: false,
+        message: "Có lỗi xảy ra",
+      };
+    }
+  }
+
+  async ExportExcelFileForAllEmployees(month, start, end) {
+    try {
+      const result = await this.getMonthlyStatistics(month, start, end);
       if (result.success && result?.data) {
         const detail = result.data.detail;
         const summary = result.data.summary;
         const workbook = new ExcelJS.Workbook();
         const worksheetDetail = workbook.addWorksheet("Detail");
         const worksheetSummary = workbook.addWorksheet("Summary");
-       worksheetDetail.columns = [
-        {header:"day", key:"day"},
-        {header:"total checkin", key:"totalCheckins"},
-        {header:"ontime checkin", key:"onTimeCheckins"},
-        {header:"late checkin", key:"lateCheckins"},
-        {header:"total of Leave", key:"totalOff"},
-        {header:"ontime employees", key:""},
-        {header:" ", key:""},
-        {header:"", key:""},
-        {header:"late employees", key:""},
-        {header:"", key:""},
-        {header:"", key:""},
-        {header:"", key:""},
-       ]
+
+        //fill data for sheet detail
+        const headersDetal = {
+          A1: "day",
+          B1: "total checkins",
+          C1: "ontime checkins",
+          D1: "late checkins",
+          E1: "total day off",
+          F1: "ontime employees",
+          I1: "late employees",
+          M1: "total fine",
+          N1: "on leave",
+          F2: "name",
+          G2: "email",
+          H2: "time",
+          I2: "name",
+          J2: "email",
+          K2: "fine",
+          L2: "time",
+          N2: "name",
+          O2: "email",
+        };
+        const headersSummary = {
+          A1: "name",
+          B1: "email",
+          C1: "total days off",
+          D1: "total late days",
+          E1: "total fine",
+        };
+
+        Object.keys(headersDetal).forEach((coord) => {
+          const cell = worksheetDetail.getCell(coord);
+          cell.value = headersDetal[coord];
+          cell.font = { bold: true, horizontal: "center" };
+        });
+
+        Object.keys(headersSummary).forEach((coord) => {
+          const cell = worksheetSummary.getCell(coord);
+          cell.value = headersSummary[coord];
+          cell.font = { bold: true, horizontal: "center" };
+        });
+
+        worksheetDetail.mergeCells("A1:A2");
+        worksheetDetail.mergeCells("B1:B2");
+        worksheetDetail.mergeCells("C1:C2");
+        worksheetDetail.mergeCells("D1:D2");
+        worksheetDetail.mergeCells("E1:E2");
+        worksheetDetail.mergeCells("M1:M2");
+        worksheetDetail.mergeCells("F1:H1");
+        worksheetDetail.mergeCells("I1:L1");
+        worksheetDetail.mergeCells("N1:O1");
+
+        let currentRow = 3;
+        detail.forEach((item) => {
+          const lateEmployeesCount = item.lateEmployees.length;
+          const onTimeEmployeesCount = item.onTimeEmployees.length;
+          const onLeaveCount = item.onLeave.length;
+          const maxRowCount = Math.max(
+            lateEmployeesCount,
+            onTimeEmployeesCount,
+            onLeaveCount
+          );
+
+          worksheetDetail.mergeCells(
+            `A${currentRow}:A${currentRow + maxRowCount - 1}`
+          );
+          worksheetDetail.mergeCells(
+            `B${currentRow}:B${currentRow + maxRowCount - 1}`
+          );
+          worksheetDetail.mergeCells(
+            `C${currentRow}:C${currentRow + maxRowCount - 1}`
+          );
+          worksheetDetail.mergeCells(
+            `D${currentRow}:D${currentRow + maxRowCount - 1}`
+          );
+          worksheetDetail.mergeCells(
+            `E${currentRow}:E${currentRow + maxRowCount - 1}`
+          );
+          worksheetDetail.mergeCells(
+            `M${currentRow}:M${currentRow + maxRowCount - 1}`
+          );
+          ["A", "B", "C", "D", "E", "M"].forEach((column) => {
+            worksheetDetail.getColumn(column).alignment = {
+              horizontal: "center",
+            };
+          });
+          const dateTimeString = item.day.toString();
+          const datePart = dateTimeString.slice(0, 10);
+          worksheetDetail.getCell(`A${currentRow}`).value = datePart;
+          worksheetDetail.getCell(`B${currentRow}`).value = item.totalCheckins;
+          worksheetDetail.getCell(`C${currentRow}`).value = item.onTimeCheckins;
+          worksheetDetail.getCell(`D${currentRow}`).value = item.lateCheckins;
+          worksheetDetail.getCell(`E${currentRow}`).value = item.totalOff;
+          worksheetDetail.getCell(`M${currentRow}`).value = item.totalFees;
+
+          item.onTimeEmployees.forEach((employee, index) => {
+            worksheetDetail.getCell(`F${currentRow + index}`).value =
+              employee.name;
+            worksheetDetail.getCell(`G${currentRow + index}`).value =
+              employee.email;
+            worksheetDetail.getCell(`H${currentRow + index}`).value =
+              employee.time;
+          });
+
+          item.lateEmployees.forEach((employee, index) => {
+            worksheetDetail.getCell(`I${currentRow + index}`).value =
+              employee.name;
+            worksheetDetail.getCell(`J${currentRow + index}`).value =
+              employee.email;
+            worksheetDetail.getCell(`K${currentRow + index}`).value =
+              employee.fee;
+            worksheetDetail.getCell(`L${currentRow + index}`).value =
+              employee.time;
+          });
+
+          item.onLeave.forEach((employee, index) => {
+            worksheetDetail.getCell(`N${currentRow + index}`).value =
+              employee.name;
+            worksheetDetail.getCell(`O${currentRow + index}`).value =
+              employee.email;
+          });
+
+          currentRow += maxRowCount;
+        });
+
+        summary.forEach((item, index) => {
+          worksheetSummary.getCell(`A${index + 2}`).value = item.name;
+          worksheetSummary.getCell(`B${index + 2}`).value = item.email;
+          worksheetSummary.getCell(`C${index + 2}`).value = item.totalLeaveDays;
+          worksheetSummary.getCell(`D${index + 2}`).value = item.totalLateDays;
+          worksheetSummary.getCell(`E${index + 2}`).value = item.totalFee;
+        });
+
+        worksheetDetail.columns.forEach((column, columnIndex) => {
+          let maxLength = 0;
+
+          column.eachCell({ includeEmpty: true }, (cell) => {
+            const cellValue = cell.value;
+            const cellText = cell.text;
+
+            const cellWidth = cellText.length + 2;
+
+            if (cellWidth > maxLength) {
+              maxLength = cellWidth;
+            }
+          });
+
+          worksheetDetail.getColumn(columnIndex + 1).width = maxLength;
+        });
+
+        worksheetSummary.columns.forEach((column, columnIndex) => {
+          let maxLength = 0;
+
+          column.eachCell({ includeEmpty: true }, (cell) => {
+            const cellText = cell.text;
+
+            const cellWidth = cellText.length + 2;
+
+            if (cellWidth > maxLength) {
+              maxLength = cellWidth;
+            }
+          });
+          worksheetSummary.getColumn(columnIndex + 1).width = maxLength;
+        });
+        return {
+          success: true,
+          data: workbook,
+        };
       }
     } catch (error) {
       console.error(error);
