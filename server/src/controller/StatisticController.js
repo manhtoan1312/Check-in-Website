@@ -156,7 +156,7 @@ module.exports = {
         const workbook = result.data;
         const tempFilePath = path.join(
           __dirname,
-          `../excel/statistic_${month}.xlsx`
+          `../statistic_${month}.xlsx`
         );
         const account = await accounts.findOne({ email: email });
         const user = await users.findOne({ _id: account.user });
@@ -200,14 +200,14 @@ module.exports = {
         const workbook = result.data;
         const tempFilePath = path.join(
           __dirname,
-          `../excel/statistic_${month}.xlsx`
+          `../statistic_${month}.xlsx`
         );
         const account = await accounts.findOne({ email: email });
         const user = await users.findOne({ _id: account.user });
         await workbook.xlsx.writeFile(tempFilePath);
         res.download(
           tempFilePath,
-          `statistic_${email}_${user.name}_${month}.xlsx`,
+          `statistic_${email}_${start}_${end}.xlsx`,
           (err) => {
             if (err) {
               console.error(err);
@@ -243,7 +243,7 @@ module.exports = {
           const workbook = result.data;
           const tempFilePath = path.join(
             __dirname,
-            `../excel/statistic_${month}.xlsx`
+            `../statistic_${month}.xlsx`
           );
           await workbook.xlsx.writeFile(tempFilePath);
           res.download(tempFilePath, `statistic_${month}.xlsx`, (err) => {
@@ -290,10 +290,10 @@ module.exports = {
           const workbook = result.data;
           const tempFilePath = path.join(
             __dirname,
-            `../excel/statistic_${month}.xlsx`
+            `../statistic_${start}-${end}.xlsx`
           );
           await workbook.xlsx.writeFile(tempFilePath);
-          res.download(tempFilePath, `statistic_${month}.xlsx`, (err) => {
+          res.download(tempFilePath, `statistic_${start}-${end}.xlsx`, (err) => {
             if (err) {
               console.error(err);
               res.status(500).json({

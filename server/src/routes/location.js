@@ -4,34 +4,26 @@ const verifyToken = require("../middleware/auth");
 const LocationController = require("../controller/LocationController");
 
 location_router.get(
-  "/get-location",
+  "/all",
   verifyToken,
   LocationController.getAllLocation
 );
-location_router.get(
-    "/get-old-location",
-    verifyToken,
-    LocationController.getOldLocation
-  );
+
 location_router.post(
-  "/add-location",
+  "/add",
   verifyToken,
   LocationController.addLocation
 );
-location_router.post(
-  "/update-location",
+location_router.put(
+  "/update",
   verifyToken,
   LocationController.updateLocation
 );
+
 location_router.delete(
-  "/delete-location/:id",
+  "/:id",
   verifyToken,
   LocationController.deleteLocation
-);
-location_router.get(
-  "/restore-location/:id",
-  verifyToken,
-  LocationController.restoreLocation
 );
 
 location_router.get('/search/:key',verifyToken, LocationController.searchLocation)

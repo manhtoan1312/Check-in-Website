@@ -3,7 +3,7 @@ const location = require("../model/location");
 class LocationService {
   async getAllLocation() {
     try {
-      const allLocation = await location.find({enable:true});
+      const allLocation = await location.find({});
       return {
         success: true,
         status: 200,
@@ -14,116 +14,93 @@ class LocationService {
       return {
         success: false,
         status: 500,
-        message: "có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }
 
-  async getOldLocation() {
+  async addLocation(Coordinate, branch, address) {
     try {
-      const allLocation = await location.find({enable:false});
+      await location.create({
+        Coordinate: Coordinate,
+        branch: branch,
+        address: address,
+      });
       return {
         success: true,
         status: 200,
-        data: allLocation,
+        message: "Location added successfully",
       };
     } catch (err) {
       console.log(err);
       return {
         success: false,
-        status: 500,
-        message: "có lỗi xảy ra",
+        status: 400,
+        message: "An error occurred",
       };
     }
   }
 
-  async addLocation(Coordinate, branch){
+  async updateLocation(id, Coordinate, branch, address) {
     try {
-        await location.create({Coordinate: Coordinate, branch:branch})
-        return {
-          success: true,
-          status: 200,
-          message:"thêm thành công!!",
-        };
-      } catch (err) {
-        console.log(err);
-        return {
-          success: false,
-          status: 500,
-          message: "có lỗi xảy ra",
-        };
-      }
-  }
-
-  async updateLocation(id, Coordinate, branch){
-    try {
-        await location.updateOne({_id: id},{Coordinate: Coordinate, branch:branch})
-        return {
-          success: true,
-          status: 200,
-          message:"cập nhật thành công!!",
-        };
-      } catch (err) {
-        console.log(err);
-        return {
-          success: false,
-          status: 500,
-          message: "có lỗi xảy ra",
-        };
-      }
-  }
-
-  async deleteLocation(id){
-    try {
-        await location.updateOne({_id: id},{enable:false})
-        return {
-          success: true,
-          status: 200,
-          message:"xóa thành công!!",
-        };
-      } catch (err) {
-        console.log(err);
-        return {
-          success: false,
-          status: 500,
-          message: "có lỗi xảy ra",
-        };
-      }
-  }
-
-  async restoreLocation(id){
-    try {
-        await location.updateOne({_id: id},{enable:true})
-        return {
-          success: true,
-          status: 200,
-          message:"khôi phục thành công!!",
-        };
-      } catch (err) {
-        console.log(err);
-        return {
-          success: false,
-          status: 500,
-          message: "có lỗi xảy ra",
-        };
-      }
-  }
-
-  async searchLocation(key){
-    try {
-      const translate = key.replace(/\+/g," ")
-      const result = await location.find({branch: {$regex: translate, option:"$i"}})
+      await location.updateOne(
+        { _id: id },
+        { Coordinate: Coordinate, branch: branch, address: address }
+      );
       return {
-        success:true,
-        data: result
-      }
-      }
-     catch (err) {
+        success: true,
+        status: 200,
+        message: "Location update successful!!",
+      };
+    } catch (err) {
       console.log(err);
       return {
         success: false,
-        status: 500,
-        message: "có lỗi xảy ra",
+        status: 400,
+        message: "An error occurred",
+      };
+    }
+  }
+
+  async deleteLocation(id) {
+    try {
+      await location.deleteOne({ _id: id });
+      return {
+        success: true,
+        status: 200,
+        message: "Deleted successfully!!",
+      };
+    } catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 400,
+        message: "An error occurred",
+      };
+    }
+  }
+
+  async searchLocation(key) {
+    try {
+      const translate = key.replace(/\+/g, " ");
+      const result = await location.find({
+        $or: [
+          { branch: { $regex: translate, $options: "i" } },
+          { address: { $regex: key, $options: "i" } },
+        ],
+      });
+
+      return {
+        status: 200,
+        success: true,
+        message: result,
+      };
+    } catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 400,
+        message: "An error occurred",
       };
     }
   }

@@ -1,16 +1,16 @@
-import img from "~/Assets/image/icon-login.png";
+import img from "~/Assets/images/official-login.jpg";
 
 function LoginSlidebar({children}) {
   return (
-    <div className="bg-[#F8F8F8] h-[100vh] flex">
-      <div className="container m-auto h-[85vh] items-center bg-white rounded-md shadow-md">
+    <div className="h-[100vh] bg-gradient-to-tl to-[#75EEFF] from-[#1E3E3C] flex">
+      <div className="container m-auto lg:h-[700px] xl:w-[1140px] items-center bg-white xl:rounded-2xl shadow-md sm:rounded-none">
         <div className="lg:grid grid-cols-2 gap-5 items-center">
           <div className="hidden lg:block h-[80vh] p-4">
-            <div className="bg-[#F6F6F6] rounded-sm text-center items-center">
-              <img className="w-full" src={img} alt="login image" />
+            <div className="h-full rounded-sm flex justify-center items-center">
+              <img className="w-full " src={img} alt="login" />
             </div>
           </div>
-          {children }
+          <div className="">{children }</div>
         </div>
       </div>
     </div>

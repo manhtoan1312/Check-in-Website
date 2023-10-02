@@ -29,19 +29,19 @@ class AccountService {
         await accounts.create(newaccount);
         return {
           success: true,
-          message: "Tài khoản đã được tạo thành công!!!",
+          message: "The account has been created successfully!!!",
         };
       } else {
         return {
           success: false,
-          message: "Email đã tồn tại!!!",
+          message: "Email already exists!!!",
         };
       }
     } catch (err) {
       console.log(err);
       return {
         success: false,
-        message: err,
+        message: "Email already exists!!!",
       };
     }
   }
@@ -79,7 +79,7 @@ class AccountService {
         return {
           status: 400,
           success: false,
-          message: "Email không tồn tại trong hệ thống",
+          message: "OTP has been sent, please check your email!!",
         };
       }
     } catch (err) {
@@ -87,7 +87,7 @@ class AccountService {
       return {
         status: 500,
         success: false,
-        message: "có lỗi trong quá trình gửi email. Vui lòng thử lại",
+        message: "There was an error during email sending. Please try again!",
       };
     }
   }
@@ -116,27 +116,27 @@ class AccountService {
             return {
               status: 200,
               success: true,
-              message: "Thay đổi Mật Khẩu Thành Công, vui lòng đăng nhập lại",
+              message: "Successful Password Change, please log in again",
             };
           } else {
             return {
               status: 400,
               success: false,
-              message: "Sai mã OTP",
+              message: "Wrong OTP",
             };
           }
         } else {
           return {
             status: 400,
             success: false,
-            message: "Mã OTP đã hết hạn",
+            message: "OTP code has expired",
           };
         }
       } else {
         return {
           status: 400,
           success: false,
-          message: "Email không tồn tại trong hệ thống",
+          message: "Email does not exist",
         };
       }
     } catch (err) {
@@ -144,7 +144,7 @@ class AccountService {
       return {
         success: false,
         status: 500,
-        message: "Có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }
@@ -163,7 +163,7 @@ class AccountService {
         return {
           success: false,
           status: 400,
-          message: "không tìm thấy thông tin trong hệ thống",
+          message: "No information found in the system",
         };
       }
     } catch (err) {
@@ -171,7 +171,7 @@ class AccountService {
       return {
         success: false,
         status: 400,
-        message: "Dữ liệu không đúng định dạng!!!",
+        message: "The data is not in the correct format!!!",
       };
     }
   }
@@ -190,14 +190,14 @@ class AccountService {
       return {
         success: true,
         status: 200,
-        message: "chỉnh sửa thông tin cá nhân thành công",
+        message: "Successfully updated personal information",
       };
     } catch (err) {
       console.log(err);
       return {
         success: false,
         status: 400,
-        message: "Dữ liệu không đúng định dạng!!!",
+        message: "The data is not in the correct format!!!",
       };
     }
   }
@@ -239,7 +239,7 @@ class AccountService {
       return {
         success: false,
         status: 500,
-        message: "có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }
@@ -351,7 +351,7 @@ class AccountService {
       return {
         success: false,
         status: 500,
-        message: "có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }
@@ -369,13 +369,13 @@ class AccountService {
         return {
           success: true,
           status: 200,
-          message: "Xóa thành công",
+          message: "Deleted successfully",
         };
       } else {
         return {
           success: false,
           status: 400,
-          message: "ID không tồn tại",
+          message: "ID does not exist",
         };
       }
     } catch (err) {
@@ -383,7 +383,7 @@ class AccountService {
       return {
         success: false,
         status: 500,
-        message: "có lỗi xảy ra!!!",
+        message: "An error occurred!!!",
       };
     }
   }
@@ -401,13 +401,13 @@ class AccountService {
         return {
           success: true,
           status: 200,
-          message: "khôi phục thành công",
+          message: "Restore user successfully",
         };
       } else {
         return {
           success: false,
           status: 400,
-          message: "ID không tồn tại",
+          message: "ID does not exist",
         };
       }
     } catch (err) {
@@ -415,7 +415,7 @@ class AccountService {
       return {
         success: false,
         status: 500,
-        message: "có lỗi xảy ra!!!",
+        message: "An error occurred!!!",
       };
     }
   }
@@ -445,20 +445,20 @@ class AccountService {
           return {
             success: true,
             status: 200,
-            message: "Xóa thành công",
+            message: "Deleted successfully",
           };
         } else {
           return {
             success: false,
             status: 400,
-            message: "không thể xóa user bạn chưa cho vào mục đã xóa",
+            message: "You cannot delete a user that has not been added to the deleted section",
           };
         }
       } else {
         return {
           success: false,
           status: 400,
-          message: "ID không tồn tại",
+          message: " ID does not exist",
         };
       }
     } catch (err) {
@@ -466,7 +466,7 @@ class AccountService {
       return {
         success: false,
         status: 500,
-        message: "có lỗi xảy ra!!!",
+        message: "An error occurred!!!",
       };
     }
   }

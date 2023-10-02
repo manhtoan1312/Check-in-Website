@@ -29,21 +29,21 @@ async function checkAccountInWorkDay(accountIdToCheck, workday) {
     if (!workDay) {
       return {
         success: false,
-        message: "Không có ngày làm việc tương ứng trong cơ sở dữ liệu.",
+        message: "There is no corresponding business date in the database.",
       };
     }
 
-    const daCheckin = await checkin.exists({
+    const Checkined = await checkin.exists({
       employee: accountIdToCheck,
       _id: { $in: workDay.checkin },
     });
 
-    return { success: true, checked: daCheckin ? true : false };
+    return { success: true, checked: Checkined ? true : false };
   } catch (error) {
     console.error(error);
     return {
       success: false,
-      message: "Đã xảy ra lỗi trong quá trình kiểm tra.",
+      message: "An error occurred during checkin.",
       error: error,
     };
   }
@@ -53,7 +53,7 @@ class CheckinService {
   async checkin(user, userlocation) {
     try {
       const { latitude, longitude } = userlocation;
-      const locates = await location.find({ enable: true });
+      const locates = await location.find({  });
       let check = false;
       let check_location;
       locates.forEach((locate) => {
@@ -73,7 +73,9 @@ class CheckinService {
       if (check) {
         const now = new Date();
         let time = now.getHours();
-        let message = `Checkin thành công tại ${check_location}`;
+        let timecheckin ;
+        let fine;
+        let message = `Check in successfully at ${check_location}`;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const account = await accounts.findOne({ email: user.email });
@@ -87,7 +89,7 @@ class CheckinService {
             if (result.success && result.checked) {
               return {
                 success: false,
-                message: "Bạn đã checkin vào ngày hôm nay!!!",
+                message: "You checked in today!!!",
               };
             }
             //if Haven't checked in yet
@@ -102,6 +104,8 @@ class CheckinService {
                   time >= CHECKIN_TIME ? (finduser.pine_times + 1) * 10000 : 0,
               };
               const newcheckin = await checkin.create(usercheckin);
+              timecheckin = newcheckin.time;
+              fine= newcheckin.fee;
               //checkin late
               if (time >= CHECKIN_TIME) {
                 await users.updateOne(
@@ -115,7 +119,7 @@ class CheckinService {
                     },
                   }
                 );
-                message = `Bạn đã đi trễ. Checkin thành công tại ${check_location}`;
+                message = `You were late. Check in successfully at ${check_location}`;
               }
               //if checkin date does not exist yet
               if (!result.success) {
@@ -137,6 +141,8 @@ class CheckinService {
               return {
                 success: true,
                 message: message,
+                time: timecheckin,
+                fine: fine,
               };
             }
           } else {
@@ -148,20 +154,20 @@ class CheckinService {
         } else {
           return {
             success: false,
-            message: `Token sai hoặc đã hết hạn, vui lòng đăng nhập lại`,
+            message: `Token is wrong or has expired, please log in again`,
           };
         }
       } else {
         return {
           success: false,
-          message: `Bạn phải vào khu vực của công ty để checkin`,
+          message: `You must enter the company area to check in`,
         };
       }
     } catch (err) {
       console.log("error: ", err);
       return {
         success: false,
-        message: err,
+        message: "An error occurred",
       };
     }
   }

@@ -8,23 +8,23 @@ class StatisticService {
   async getPersonalWorkday(email, month, start, end) {
     try {
       const findAccount = await accounts.findOne({ email: email });
-
+  
       if (!findAccount) {
         return {
           success: false,
-          message: "Không tìm thấy tài khoản của bạn, vui lòng đăng nhập lại",
+          message: "Account was not found, please log in again",
         };
       }
-
+  
       const now = new Date();
       const year = now.getFullYear().toString();
       const startDate = start ? start : new Date(year, month - 1, 1, 0, 0, 0);
       const endDate = end ? end : new Date(year, month, 1, 0, 0, 0);
-      let totalAbsentDays = 0;
+      let totalLateDays = 0;
       let totalLeaveDays = 0;
       let totalFee = 0;
       const result = [];
-
+  
       const workDayInMonth = await work_day.aggregate([
         {
           $match: {
@@ -35,6 +35,7 @@ class StatisticService {
           },
         },
       ]);
+  
       for (const dayOfWork of workDayInMonth) {
         let checkday;
         for (const check of dayOfWork.checkin) {
@@ -45,31 +46,45 @@ class StatisticService {
             break;
           }
         }
-        const isOff = !checkday;
-        if (checkday && checkday.late) {
-          totalAbsentDays++;
-          totalFee += checkday.fee;
-        } else {
-          totalLeaveDays++;
+  
+        
+        const createdDate = findAccount.create_at;
+        if (checkday) {      
+          if (checkday.late) {
+            totalLateDays++;
+            totalFee += checkday.fee;
+          }
+          const newRecord = {
+            day: dayOfWork.day,
+            time:  checkday.time,
+            off: false,
+            late: checkday.late,
+            fee: checkday.fee,
+          };
+          
+          result.push(newRecord);
         }
-
-        const newRecord = {
-          day: dayOfWork.day,
-          time: isOff ? "" : checkday.time,
-          off: isOff,
-          late: isOff ? false : checkday.late,
-          fee: isOff ? 0 : checkday.fee,
-        };
-
-        result.push(newRecord);
+        else if(createdDate <= dayOfWork.day){
+          totalLeaveDays++;
+          const newRecord = {
+            day: dayOfWork.day,
+            time:  '',
+            off: true,
+            late: false,
+            fee: 0,
+          };
+          
+          result.push(newRecord);
+        }
       }
+  
       return {
         success: true,
         data: {
           email: email,
           detail: result,
           summary: {
-            totalAbsentDays,
+            totalLateDays,
             totalLeaveDays,
             totalFee,
           },
@@ -79,7 +94,7 @@ class StatisticService {
       console.log(err);
       return {
         success: false,
-        message: "có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }
@@ -131,6 +146,7 @@ class StatisticService {
       };
     }
   }
+  
 
   async getMonthlyStatistics1(workDaysInMonth) {
     try {
@@ -140,13 +156,18 @@ class StatisticService {
         const usersOnLeave = [];
         const date = workDay.day;
         const checkins = workDay.checkin;
-        const validCheckins = checkins.filter((check) => {
-          const us = enabledUsers.find((user) =>
-            user._id.equals(check.employee.user)
-          );
-          return us && us.enable;
+  
+        const validCheckins = checkins.filter(async (check) => {
+          const user = await users.findOne({ _id: check.employee.user, enable: true });
+          if (user) {
+            const account = await accounts.findOne({ user: user._id });
+            if (account.create_at <= date) {
+              return true;
+            }
+          }
+          return false;
         });
-
+  
         const totalCheckins = validCheckins.length;
         const lateCheckins = validCheckins.filter((check) => check.late).length;
         const onTimeCheckins = totalCheckins - lateCheckins;
@@ -154,21 +175,23 @@ class StatisticService {
           (total, check) => total + check.fee,
           0
         );
-
+  
         const lateEmployees = [];
         const onTimeEmployees = [];
-
+  
         for (const user of enabledUsers) {
           const hasCheckin = checkins.some((check) =>
             check.employee.user.equals(user._id)
           );
-
+  
           if (!hasCheckin) {
             const account = await accounts.findOne({ user: user._id });
-            usersOnLeave.push({
-              name: user.name,
-              email: account.email,
-            });
+            if (account.create_at <= date) {
+              usersOnLeave.push({
+                name: user.name,
+                email: account.email,
+              });
+            }
           }
         }
         for (const check of checkins) {
@@ -177,17 +200,20 @@ class StatisticService {
             enable: true,
           });
           if (user) {
-            const employeeInfo = {
-              name: user.name,
-              email: check.employee.email,
-              fee: check.fee,
-              time: check.time,
-            };
-
-            if (check.late) {
-              lateEmployees.push(employeeInfo);
-            } else {
-              onTimeEmployees.push(employeeInfo);
+            const account = await accounts.findOne({ user: user._id });
+            if (account.create_at <= date) {
+              const employeeInfo = {
+                name: user.name,
+                email: check.employee.email,
+                fee: check.fee,
+                time: check.time,
+              };
+  
+              if (check.late) {
+                lateEmployees.push(employeeInfo);
+              } else {
+                onTimeEmployees.push(employeeInfo);
+              }
             }
           }
         }
@@ -203,10 +229,10 @@ class StatisticService {
           onTimeEmployees: onTimeEmployees,
           onLeave: usersOnLeave,
         };
-
+  
         monthlyStatistics.push(dailyStatistics);
       }
-
+  
       return {
         success: true,
         data: monthlyStatistics,
@@ -215,12 +241,12 @@ class StatisticService {
       console.error(error);
       return {
         success: false,
-        message: "Có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }
+  
 
-  async;
 
   async getMonthlyStatistics2(workDaysInMonth) {
     try {
@@ -234,28 +260,32 @@ class StatisticService {
           totalLateDays: 0,
           totalFee: 0,
         };
-
+  
+        const account = await accounts.findOne({ user: user._id });
+        userStats.email = account.email;
+  
         for (const workDay of workDaysInMonth) {
           const checkins = workDay.checkin;
           const userCheckins = checkins.filter((check) =>
             check.employee.user.equals(user._id)
           );
-
+  
           if (userCheckins.length === 0) {
-            userStats.totalLeaveDays += 1;
+            const createdDate = account.create_at;
+            if (createdDate <= workDay.day) {
+              userStats.totalLeaveDays += 1;
+            }
           } else {
-            if (userCheckins[0].late) {
+            const checkin = userCheckins[0];
+            if (checkin.late) {
               userStats.totalLateDays += 1;
             }
-            userStats.totalFee += userCheckins[0].fee;
+            userStats.totalFee += checkin.fee;
           }
         }
-        const account = await accounts.findOne({ user: user._id });
-        userStats.email = account.email;
-
         monthlyStatistics.push(userStats);
       }
-
+  
       return {
         success: true,
         data: monthlyStatistics,
@@ -264,10 +294,11 @@ class StatisticService {
       console.error(error);
       return {
         success: false,
-        message: "Có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }
+  
 
   async exportPersonalExcelFile(email, month, start, end) {
     try {
@@ -299,9 +330,9 @@ class StatisticService {
         });
 
         const summarysite = detail.length + 3;
-        worksheet.getCell(`A${summarysite}`).value = "Total Absent Days:";
+        worksheet.getCell(`A${summarysite}`).value = "Total Late Days:";
         worksheet.getCell(`A${summarysite + 1}`).value = "Total Ontime Days:";
-        worksheet.getCell(`A${summarysite + 2}`).value = "Total Days Off:";
+        worksheet.getCell(`A${summarysite + 2}`).value = "Total Leave Days:";
         worksheet.getCell(`A${summarysite + 3}`).value = "Total Fine:";
         worksheet.mergeCells(`A${summarysite}:C${summarysite}`);
         worksheet.mergeCells(`A${summarysite + 1}:C${summarysite + 1}`);
@@ -311,9 +342,9 @@ class StatisticService {
           const cell = worksheet.getCell(`A${summarysite + i}`);
           cell.font = { bold: true };
         }
-        worksheet.getCell(`D${summarysite}`).value = summary.totalAbsentDays;
+        worksheet.getCell(`D${summarysite}`).value = summary.totalLateDays;
         worksheet.getCell(`D${summarysite + 1}`).value =
-          summarysite - 3 - summary.totalAbsentDays - summary.totalLeaveDays;
+          summarysite - 3 - summary.totalLateDays - summary.totalLeaveDays;
         worksheet.getCell(`D${summarysite + 2}`).value = summary.totalLeaveDays;
         worksheet.getCell(`D${summarysite + 3}`).value = summary.totalFee;
         return {
@@ -325,7 +356,7 @@ class StatisticService {
       console.error(error);
       return {
         success: false,
-        message: "Có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }
@@ -346,7 +377,7 @@ class StatisticService {
           B1: "total checkins",
           C1: "ontime checkins",
           D1: "late checkins",
-          E1: "total day off",
+          E1: "total leaves",
           F1: "ontime employees",
           I1: "late employees",
           M1: "total fine",
@@ -364,7 +395,7 @@ class StatisticService {
         const headersSummary = {
           A1: "name",
           B1: "email",
-          C1: "total days off",
+          C1: "total leave days",
           D1: "total late days",
           E1: "total fine",
         };
@@ -512,7 +543,7 @@ class StatisticService {
       console.error(error);
       return {
         success: false,
-        message: "Có lỗi xảy ra",
+        message: "An error occurred",
       };
     }
   }

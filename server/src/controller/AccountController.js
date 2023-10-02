@@ -18,31 +18,35 @@ module.exports = {
         email,
       });
 
-      const user = await users.findOne({ _id: account.user });
-
-      if (
-        user.enable &&
-        account &&
-        (await bcrypt.compare(password, account.password))
-      ) {
-        const role = account.role;
-        const token = jwt.sign(
-          { account_id: account._id, email, role },
-          process.env.TOKEN_KEY,
-          {
-            expiresIn: "2h",
-          }
-        );
-        res.status(200).json({ token: token, message: "Đăng nhập thành công" });
+      if (account) {
+        const user = await users.findOne({ _id: account.user });
+        if (await bcrypt.compare(password, account.password)) {
+          const role = account.role;
+          const token = jwt.sign(
+            { email, name: user.name, role },
+            process.env.TOKEN_KEY,
+            {
+              expiresIn: "2h",
+            }
+          );
+          res
+            .status(200)
+            .json({ token: token, message: "Đăng nhập thành công" });
+        } else {
+          res.status(400).json({
+            success: false,
+            message: "Invalid email or password",
+          });
+        }
       } else {
         res.status(400).json({
           success: false,
-          message: "Tài khoản hoặc mật khẩu không đúng",
+          message: "Invalid email or password",
         });
       }
     } catch (err) {
       console.log(err);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "Server Error" });
     }
   },
 
@@ -59,7 +63,14 @@ module.exports = {
         password: req.body.password,
         role: req.body.role,
       };
-      if (!(userData.name && userData.email && userData.password)) {
+      if (
+        !(
+          userData.email &&
+          userData.password &&
+          userData.phone &&
+          userData.name
+        )
+      ) {
         res.status(400).json({
           success: false,
           message: "Cần phải nhập đủ các trường yêu cầu",
@@ -95,7 +106,7 @@ module.exports = {
       if (!email) {
         res.status(400).json({
           success: false,
-          message: "Yêu cầu nhập email",
+          message: "Email is required",
         });
         return;
       }
