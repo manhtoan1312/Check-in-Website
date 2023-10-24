@@ -17,16 +17,18 @@ module.exports = {
       res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
     }
   },
-  
+
   addLocation: async (req, res) => {
     try {
       const role = req.user.role;
       if (role == "MANAGER") {
-        const Coordinate = req.body.Coordinate;
-        const branch = req.body.branch;
-        const address = req.body.address;
+        const { Coordinate, branch, address } = req.body.location;
         const locationService = new LocationService();
-        const result = await locationService.addLocation(Coordinate, branch, address);
+        const result = await locationService.addLocation(
+          Coordinate,
+          branch,
+          address
+        );
         res.status(result.status).json({
           success: result.success,
           message: result.message,
@@ -47,15 +49,15 @@ module.exports = {
     try {
       const role = req.user.role;
       if (role == "MANAGER") {
-        const id = req.body._id;
-        const Coordinate = req.body.Coordinate;
-        const branch = req.body.branch;
-        const address = req.body.address;
+        const id = req.body.id;
+        const { Coordinate, branch, address } = req.body.location;
+        console.log(req.body)
         const locationService = new LocationService();
         const result = await locationService.updateLocation(
           id,
           Coordinate,
-          branch
+          branch,
+          address
         );
         res.status(result.status).json({
           success: result.success,
@@ -104,7 +106,7 @@ module.exports = {
       if (role == "MANAGER") {
         const key = req.params.key;
         const locationService = new LocationService();
-        const result = await locationService.searchLocation(key)
+        const result = await locationService.searchLocation(key);
         res.status(result.status).json({
           success: result?.success,
           message: result?.message,
@@ -122,4 +124,27 @@ module.exports = {
     }
   },
 
+  getLocationByID: async (req, res) => {
+    try {
+      const role = req.user.role;
+      if (role == "MANAGER") {
+        const id = req.params.id
+        const locationService = new LocationService();
+        const result = await locationService.getLocationByID(id);
+        res.status(result.status).json({
+          success: result?.success,
+          message: result?.message,
+        });
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền truy cập chức năng này",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+    }
+  },
 };

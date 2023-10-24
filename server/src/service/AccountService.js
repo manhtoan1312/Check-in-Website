@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 const accounts = require("../model/accounts");
 const users = require("../model/users");
 const { generateOTP } = require("./OTPService");
@@ -41,7 +42,7 @@ class AccountService {
       console.log(err);
       return {
         success: false,
-        message: "Email already exists!!!",
+        message: "Server Error",
       };
     }
   }
@@ -49,8 +50,10 @@ class AccountService {
   async forgotPassword(email) {
     try {
       const findaccount = await accounts.findOne({ email: email });
-      const user = await users.findOne({ _id: findaccount.user });
-      if (findaccount && user.enable) {
+      const user = findaccount
+        ? await users.findOne({ _id: findaccount.user })
+        : null;
+      if (findaccount && user?.enable) {
         const OTP = generateOTP();
         const now = new Date();
         const today = now.toISOString();
@@ -73,13 +76,13 @@ class AccountService {
         return {
           status: 200,
           success: true,
-          message: "OTP đã được gửi, vui lòng kiểm tra hộp thư của bạn!!",
+          message: "OTP has been sent, please check your email!!",
         };
       } else {
         return {
           status: 400,
           success: false,
-          message: "OTP has been sent, please check your email!!",
+          message: "Email does not exist!!",
         };
       }
     } catch (err) {
@@ -92,11 +95,38 @@ class AccountService {
     }
   }
 
+  async checkmail(email) {
+    try {
+      const findaccount = await accounts.findOne({ email: email });
+      const user = findaccount
+        ? await users.findOne({ _id: findaccount.user })
+        : null;
+      if (findaccount && user?.enable) {
+        return { status: 200, success: true, message: "email exists" };
+      } else {
+        return {
+          status: 400,
+          success: false,
+          message: "This email is not registered",
+        };
+      }
+    } catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 500,
+        message: "An error occurred",
+      };
+    }
+  }
+
   async changePassword(email, password, OTP) {
     try {
       const findaccount = await accounts.findOne({ email: email });
-      const user = await users.findOne({ _id: findaccount.user });
-      if (findaccount && user.enable) {
+      const user = findaccount
+        ? await users.findOne({ _id: findaccount.user })
+        : null;
+      if (findaccount && user?.enable) {
         const now = new Date();
         const otpCreateTime = new Date(findaccount.otp_requested_time);
         const timeDifference = now - otpCreateTime;
@@ -116,7 +146,7 @@ class AccountService {
             return {
               status: 200,
               success: true,
-              message: "Successful Password Change, please log in again",
+              message: "Changed password successfully!!!",
             };
           } else {
             return {
@@ -152,7 +182,9 @@ class AccountService {
   async getPersonalInformation(email) {
     try {
       const findaccount = await accounts.findOne({ email: email });
-      const user = await users.findOne({ _id: findaccount.user });
+      const user = findaccount
+        ? await users.findOne({ _id: findaccount.user })
+        : null;
       if (user) {
         return {
           success: true,
@@ -260,7 +292,7 @@ class AccountService {
       {
         $match: {
           $or: [
-            { "email": { $regex: translate, $options: "i" } },
+            { email: { $regex: translate, $options: "i" } },
             { "user.name": { $regex: translate, $options: "i" } },
           ],
           "user.enable": true,
@@ -352,6 +384,115 @@ class AccountService {
         success: false,
         status: 500,
         message: "An error occurred",
+      };
+    }
+  }
+
+  async getAccountByID(_id) {
+    try {
+      const findaccount = await accounts.findOne({ _id: _id });
+      if (findaccount) {
+        const account = await accounts.aggregate([
+          {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          {
+            $unwind: "$user",
+          },
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(_id),
+            },
+          },
+        ]);
+        return {
+          success: true,
+          status: 200,
+          data: account[0],
+        };
+      } else {
+        return {
+          success: false,
+          status: 400,
+          message: "ID does not exist",
+        };
+      }
+    } catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 500,
+        message: "An error occurred",
+      };
+    }
+  }
+
+  async UpdateEmployee(
+    _id,
+    email,
+    password,
+    role,
+    name,
+    gender,
+    address,
+    phone,
+    changepassword
+  ) {
+    try {
+      const findaccount = await accounts.findOne({ _id: _id });
+      if (findaccount) {
+        if (changepassword) {
+          const salt = bcrypt.genSaltSync(10);
+          await accounts.updateOne(
+            { _id: _id },
+            {
+              email: email,
+              password: bcrypt.hashSync(password, salt),
+              role: role,
+            }
+          );
+        }
+        else{
+          await accounts.updateOne(
+            { _id: _id },
+            {
+              email: email,
+              role: role,
+            }
+          );
+        }
+        await users.updateOne(
+          { _id: findaccount.user },
+          {
+            name: name,
+            gender: gender,
+            address,
+            phone,
+          }
+        );
+        return {
+          success: true,
+          status: 200,
+          message: "Updated Employee successfully",
+        };
+      } else {
+        return {
+          success: false,
+          status: 400,
+          message: "ID does not exist",
+        };
+      }
+    } catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 500,
+        message: "An error occurred!!!",
       };
     }
   }
@@ -451,7 +592,8 @@ class AccountService {
           return {
             success: false,
             status: 400,
-            message: "You cannot delete a user that has not been added to the deleted section",
+            message:
+              "You cannot delete a user that has not been added to the deleted section",
           };
         }
       } else {

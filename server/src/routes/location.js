@@ -4,18 +4,18 @@ const verifyToken = require("../middleware/auth");
 const LocationController = require("../controller/LocationController");
 
 location_router.get(
-  "/all",
-  verifyToken,
+  "/",
+  verifyToken, 
   LocationController.getAllLocation
 );
 
 location_router.post(
-  "/add",
+  "/",
   verifyToken,
   LocationController.addLocation
 );
 location_router.put(
-  "/update",
+  "/",
   verifyToken,
   LocationController.updateLocation
 );
@@ -27,5 +27,6 @@ location_router.delete(
 );
 
 location_router.get('/search/:key',verifyToken, LocationController.searchLocation)
+location_router.get('/by_id/:id',verifyToken, LocationController.getLocationByID)
 
 module.exports = location_router;

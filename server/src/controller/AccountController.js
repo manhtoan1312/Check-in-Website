@@ -10,32 +10,38 @@ module.exports = {
       if (!(email && password)) {
         res.status(400).json({
           success: false,
-          message: "Cần phải nhập đủ các trường yêu cầu",
+          message: "It is necessary to enter all required fields",
         });
         return;
       }
       const account = await accounts.findOne({
         email,
       });
-
       if (account) {
         const user = await users.findOne({ _id: account.user });
-        if (await bcrypt.compare(password, account.password)) {
-          const role = account.role;
-          const token = jwt.sign(
-            { email, name: user.name, role },
-            process.env.TOKEN_KEY,
-            {
-              expiresIn: "2h",
-            }
-          );
-          res
-            .status(200)
-            .json({ token: token, message: "Đăng nhập thành công" });
-        } else {
-          res.status(400).json({
-            success: false,
-            message: "Invalid email or password",
+        if(user.enable){
+          if (await bcrypt.compare(password, account.password)) {
+            const role = account.role;
+            const token = jwt.sign(
+              { email, name: user.name, role, enable: user.enable },
+              process.env.TOKEN_KEY,
+              {
+                expiresIn: "24h",
+              }
+            );
+            res
+              .status(200)
+              .json({ token: token, message: "Logged in successfully" });
+          } else {
+            res.status(400).json({
+              success: false,
+              message: "Invalid email or password",
+            });
+        }
+        } else{
+          return res.status(403).json({
+            success:false,
+            message:"This account cannot currently log into the system"
           });
         }
       } else {
@@ -80,10 +86,13 @@ module.exports = {
       try {
         const result = await accountService.createUser(userData);
         if (result.success) {
-          res.status(200).json(result);
+          res.status(200).json({
+            success: true,
+            message: result.message,
+          });
           return;
         } else {
-          res.status(400).json(result);
+          res.status(400).json({ success: false, message: result.message });
           return;
         }
       } catch (err) {
@@ -94,7 +103,7 @@ module.exports = {
     } else {
       res.status(403).json({
         success: false,
-        message: "Bạn không có quyền truy cập chức năng này",
+        message: "You do not have permission to access this function",
       });
       return;
     }
@@ -118,7 +127,21 @@ module.exports = {
       });
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
+    }
+  },
+  checkemail: async (req, res) => {
+    try {
+      const email = req.body.email;
+      const accountService = new AccountService();
+      const result = await accountService.checkmail(email);
+      res.status(result.status).json({
+        success: result.success,
+        message: result.message,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 
@@ -133,7 +156,7 @@ module.exports = {
       });
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 
@@ -141,23 +164,23 @@ module.exports = {
     try {
       const email = req.body.email;
       const password = req.body.password;
-      const OTP = req.body.OTP;
-      if (!(email && password && OTP)) {
+      const otp = req.body.otp;
+      if (!(email && password && otp)) {
         res.status(400).json({
           success: false,
-          message: "Yêu cầu nhập đủ các trường",
+          message: "Required to enter all fields",
         });
         return;
       }
       const accountService = new AccountService();
-      const result = await accountService.changePassword(email, password, OTP);
+      const result = await accountService.changePassword(email, password, otp);
       res.status(result.status).json({
         success: result.success,
         message: result.message,
       });
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 
@@ -165,23 +188,24 @@ module.exports = {
     try {
       const email = req.user.email;
       const password = req.body.password;
-      const OTP = req.body.OTP;
-      if (!(email && password && OTP)) {
+      const otp = req.body.otp;
+
+      if (!(email && password && otp)) {
         res.status(400).json({
           success: false,
-          message: "Yêu cầu nhập đủ các trường",
+          message: "Required to enter all fields",
         });
         return;
       }
       const accountService = new AccountService();
-      const result = await accountService.changePassword(email, password, OTP);
+      const result = await accountService.changePassword(email, password, otp);
       res.status(result.status).json({
         success: result.success,
         message: result.message,
       });
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
   getPersonalInformation: async (req, res) => {
@@ -195,7 +219,7 @@ module.exports = {
       });
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
   UpdateInformation: async (req, res) => {
@@ -220,7 +244,7 @@ module.exports = {
       });
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
   getAllUsers: async (req, res) => {
@@ -239,13 +263,80 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
+    }
+  },
+
+  getAccountByID: async (req, res) => {
+    try {
+      const role = req.user.role;
+      const _id = req.params.id;
+      if (role == "MANAGER") {
+        const accountService = new AccountService();
+        const result = await accountService.getAccountByID(_id);
+        if (result?.success) {
+          res.status(200).json(result?.data);
+          return;
+        } else {
+          res.status(400).json({ success: false, message: result?.message });
+          return;
+        }
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "You do not have permission to access this function",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "An error occurred" });
+    }
+  },
+  updateEmployee: async (req, res) => {
+    try {
+      const user = req.user;
+      const _id = req.body._id;
+      const email = req.body.email;
+      const password = req.body.password;
+      const role = req.body.role;
+      const name = req.body.name;
+      const gender = req.body.gender;
+      const address = req.body.address;
+      const phone = req.body.phone;
+      const changepassword = req.body.changepassword
+      if (user.role == "MANAGER") {
+        const accountService = new AccountService();
+        const result = await accountService.UpdateEmployee(
+          _id,
+          email,
+          password,
+          role,
+          name,
+          gender,
+          address,
+          phone,
+          changepassword
+        );
+        res
+          .status(result.status)
+          .json({ success: result.success, message: result.message });
+      } else {
+        res.status(403).json({
+          success: false,
+          message: "You do not have permission to access this function",
+        });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 
@@ -265,13 +356,13 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 
@@ -289,13 +380,13 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 
@@ -313,13 +404,13 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 
@@ -337,13 +428,13 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 
@@ -352,8 +443,9 @@ module.exports = {
       const role = req.user.role;
       if (role == "MANAGER") {
         const key = req.params.key;
+        const newkey = key.replace("+", " ");
         const accountService = new AccountService();
-        const result = await accountService.SearchActiveAccount(key);
+        const result = await accountService.SearchActiveAccount(newkey);
         res.status(200).json({
           result,
         });
@@ -361,13 +453,13 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
   searchUnActiveEmployees: async (req, res) => {
@@ -375,8 +467,9 @@ module.exports = {
       const role = req.user.role;
       if (role == "MANAGER") {
         const key = req.params.key;
+        const newkey = key.replace("+", " ");
         const accountService = new AccountService();
-        const result = await accountService.SearchUnactiveAccount(key);
+        const result = await accountService.SearchUnactiveAccount(newkey);
         res.status(200).json({
           result,
         });
@@ -384,13 +477,13 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "An error occurred" });
     }
   },
 };

@@ -1,18 +1,19 @@
 import jwt_decode from "jwt-decode";
 function getRole() {
+  const token = localStorage.getItem("token") ? JSON.parse(localStorage.getItem("token")): null;
+  const remember=localStorage.getItem("rememberme") ? JSON.parse(localStorage.getItem("rememberme")) :false 
   const role = {
-    isLogin: sessionStorage.getItem("isLogin") || false,
-    rememberme: JSON.parse(localStorage.getItem("rememberme")) || false,
-    token: JSON.parse(localStorage.getItem("token")) || null,
+    isLogin: sessionStorage.getItem('isLogin') || false,
+    rememberme: remember,
+    token: token,
     role: null,
     name: null,
     email: null,
   };
 
-  if ((!role.isLogin && !role.rememberme) || !role.token) {
+  if ( (!role.isLogin && !role.rememberme) || !role.token) {
     role.token = "";
     role.role = null;
-    role.isLogin = false;
     role.rememberme = false;
     role.name = null;
     role.email = null;
@@ -20,7 +21,6 @@ function getRole() {
   if (role.token) {
     function getCurrentUser() {
       const token = localStorage.getItem("token") || "";
-    //   const secret = "adfghsdfywertdfg451g2dsfg";
       try {
         const decode = jwt_decode(token);
         role.role = decode.role;

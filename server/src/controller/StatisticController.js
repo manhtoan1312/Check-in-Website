@@ -11,7 +11,7 @@ module.exports = {
       const statisticService = new StatisticService();
       const result = await statisticService.getPersonalWorkday(email, month);
       if (result?.success) {
-        res.status(200).json(result?.data);
+        res.status(200).json(result);
         return;
       } else {
         res.status(400).json({ success: false, message: result?.message });
@@ -19,7 +19,7 @@ module.exports = {
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "Server Error!" });
     }
   },
   get_Monthly_Statistics: async (req, res) => {
@@ -29,7 +29,7 @@ module.exports = {
       const statisticService = new StatisticService();
       const result = await statisticService.getMonthlyStatistics(month);
       if (result?.success) {
-        res.status(200).json(result?.data);
+        res.status(200).json(result);
         return;
       } else {
         res.status(400).json({ success: false, message: result?.message });
@@ -38,7 +38,7 @@ module.exports = {
     } else {
       res.status(403).json({
         success: false,
-        message: "Bạn không có quyền truy cập chức năng này",
+        message: "You do not have permission to access this function",
       });
       return;
     }
@@ -60,7 +60,7 @@ module.exports = {
     } else {
       res.status(403).json({
         success: false,
-        message: "Bạn không có quyền truy cập chức năng này",
+        message: "You do not have permission to access this function",
       });
       return;
     }
@@ -69,14 +69,15 @@ module.exports = {
   getPersonalWorkdayByDate: async (req, res) => {
     const user = req.user;
     let email = user.email;
-    let startDate = req.params.start;
-    let endDate = req.params.end;
+    let start = new Date(req.params.start);
+    start.setDate(start.getDate()-1);
+    let end = new Date(req.params.end);
     const statisticService = new StatisticService();
     const result = await statisticService.getPersonalWorkday(
       email,
       0,
-      startDate,
-      endDate
+      start,
+      end
     );
     if (result?.success) {
       res.status(200).json(result?.data);
@@ -90,15 +91,16 @@ module.exports = {
   getPersonalWorkdayByDateandEmail: async (req, res) => {
     const user = req.user;
     if (user.role == "MANAGER") {
-      let email = req.email;
-      let startDate = req.params.start;
-      let endDate = req.params.end;
+      let email = req.params.email;
+      let start = new Date(req.params.start);
+      start.setDate(start.getDate()-1);
+      let end = new Date(req.params.end);
       const statisticService = new StatisticService();
       const result = await statisticService.getPersonalWorkday(
         email,
         0,
-        startDate,
-        endDate
+        start,
+        end
       );
       if (result?.success) {
         res.status(200).json(result?.data);
@@ -110,7 +112,7 @@ module.exports = {
     } else {
       res.status(403).json({
         success: false,
-        message: "Bạn không có quyền truy cập chức năng này",
+        message: "You do not have permission to access this function",
       });
       return;
     }
@@ -119,13 +121,14 @@ module.exports = {
   getWorkdayByDate: async (req, res) => {
     const user = req.user;
     if (user.role == "MANAGER") {
-      let startDate = req.params.start;
-      let endDate = req.params.end;
+      let start = new Date(req.params.start);
+      start.setDate(start.getDate()-1);
+      let end = new Date(req.params.end);
       const statisticService = new StatisticService();
       const result = await statisticService.getMonthlyStatistics(
         0,
-        startDate,
-        endDate
+        start,
+        end
       );
       if (result?.success) {
         res.status(200).json(result?.data);
@@ -137,7 +140,7 @@ module.exports = {
     } else {
       res.status(403).json({
         success: false,
-        message: "Bạn không có quyền truy cập chức năng này",
+        message: "You do not have permission to access this function",
       });
       return;
     }
@@ -169,7 +172,7 @@ module.exports = {
               console.error(err);
               res.status(500).json({
                 success: false,
-                message: "Có lỗi xảy ra khi tải tệp Excel.",
+                message: "An error occurred while loading the Excel file.",
               });
             } else {
               fs.unlinkSync(tempFilePath);
@@ -182,15 +185,16 @@ module.exports = {
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "Server Error!" });
     }
   },
 
   download_Personal_Statistics_FormDate: async (req, res) => {
     try {
-      let email = req.params.email;
-      let start = req.params.start;
-      let end = req.params.end;
+      let email = req.user.email;
+      let start = new Date(req.params.start);
+      start.setDate(start.getDate()-1);
+      let end = new Date(req.params.end);
       const statisticService = new StatisticService();
       const result = await statisticService.exportPersonalExcelFile(
         email,
@@ -200,20 +204,18 @@ module.exports = {
         const workbook = result.data;
         const tempFilePath = path.join(
           __dirname,
-          `../statistic_${month}.xlsx`
+          `../statistic_${email}_${req.params.start}_${req.params.end}.xlsx`
         );
-        const account = await accounts.findOne({ email: email });
-        const user = await users.findOne({ _id: account.user });
         await workbook.xlsx.writeFile(tempFilePath);
         res.download(
           tempFilePath,
-          `statistic_${email}_${start}_${end}.xlsx`,
+          `statistic_${email}_${req.params.start}_${req.params.end}.xlsx`,
           (err) => {
             if (err) {
               console.error(err);
               res.status(500).json({
                 success: false,
-                message: "Có lỗi xảy ra khi tải tệp Excel.",
+                message: "An error occurred while loading the Excel file.",
               });
             } else {
               fs.unlinkSync(tempFilePath);
@@ -226,9 +228,53 @@ module.exports = {
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "Server Error!" });
     }
   },
+
+  MDownload_Personal_Statistics_FormDate: async (req, res) => {
+    try {
+      let email = req.params.email;
+      let start = new Date(req.params.start);
+      start.setDate(start.getDate()-1);
+      let end = new Date(req.params.end);
+      const statisticService = new StatisticService();
+      const result = await statisticService.exportPersonalExcelFile(
+        email,
+        0,start,end
+      );
+      if (result?.success) {
+        const workbook = result.data;
+        const tempFilePath = path.join(
+          __dirname,
+          `../statistic_${email}_${req.params.start}_${req.params.end}.xlsx`
+        );
+        await workbook.xlsx.writeFile(tempFilePath);
+        res.download(
+          tempFilePath,
+          `statistic_${email}_${req.params.start}_${req.params.end}.xlsx`,
+          (err) => {
+            if (err) {
+              console.error(err);
+              res.status(500).json({
+                success: false,
+                message: "An error occurred while loading the Excel file.",
+              });
+            } else {
+              fs.unlinkSync(tempFilePath);
+            }
+          }
+        );
+      } else {
+        res.status(400).json({ success: false, message: result?.message });
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: "Server Error!" });
+    }
+  },
+
 
   download_Monthly_Statistics: async (req, res) => {
     try {
@@ -251,7 +297,7 @@ module.exports = {
               console.error(err);
               res.status(500).json({
                 success: false,
-                message: "Có lỗi xảy ra khi tải tệp Excel.",
+                message: "An error occurred while loading the Excel file.",
               });
             } else {
               fs.unlinkSync(tempFilePath);
@@ -264,13 +310,13 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "Server Error!" });
     }
   },
 
@@ -278,8 +324,9 @@ module.exports = {
     try {
       const user = req.user;
       if (user.role == "MANAGER") {
-        let start = req.params.start;
-        let end = req.params.end;
+        let start = new Date(req.params.start);
+        start.setDate(start.getDate()-1);
+        let end = new Date(req.params.end);
         const statisticService = new StatisticService();
         const result = await statisticService.ExportExcelFileForAllEmployees(
           0,
@@ -290,15 +337,15 @@ module.exports = {
           const workbook = result.data;
           const tempFilePath = path.join(
             __dirname,
-            `../statistic_${start}-${end}.xlsx`
+            `../statisticAll_${req.params.start}-${req.params.end}.xlsx`
           );
           await workbook.xlsx.writeFile(tempFilePath);
-          res.download(tempFilePath, `statistic_${start}-${end}.xlsx`, (err) => {
+          res.download(tempFilePath, `statisticAll_${req.params.start}-${req.params.end}.xlsx`, (err) => {
             if (err) {
               console.error(err);
               res.status(500).json({
                 success: false,
-                message: "Có lỗi xảy ra khi tải tệp Excel.",
+                message: "An error occurred while loading the Excel file.",
               });
             } else {
               fs.unlinkSync(tempFilePath);
@@ -311,13 +358,13 @@ module.exports = {
       } else {
         res.status(403).json({
           success: false,
-          message: "Bạn không có quyền truy cập chức năng này",
+          message: "You do not have permission to access this function",
         });
         return;
       }
     } catch (error) {
       console.log(error);
-      res.status(500).json({ success: false, message: "Đã xảy ra lỗi" });
+      res.status(500).json({ success: false, message: "Server Error!" });
     }
   },
 };

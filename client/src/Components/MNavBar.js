@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import {
   faUser,
   faArrowRightFromBracket,
+  faBars,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import getRole from "~/service/RoleService";
-function Snavbar() {
+import SlideBar from "~/layouts/Slidebar";
+function Mnavbar() {
   const unactive =
     "py-2 pl-3 pr-4 text-gray-900 rounded flex justify-center items-center hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-[#4DAEE5] md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent";
   const active =
@@ -18,7 +20,9 @@ function Snavbar() {
   const { logout: ContextLogout } = useAuth();
   const [activeButton, setActiveButton] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSlidebarOpen, setIsSlidebarOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const slideRef = useRef(null);
   const role = getRole();
   useEffect(() => {
     document.addEventListener("click", handleGlobalClick);
@@ -40,21 +44,38 @@ function Snavbar() {
     if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
       setIsDropdownOpen(false);
     }
+    if (slideRef.current && !slideRef.current.contains(e.target)) {
+      setIsSlidebarOpen(false);
+    }
   };
 
   const toggleUserDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+  const ActiveSlidebar = () => {
+    setIsSlidebarOpen(!isSlidebarOpen);
+  };
   return (
-    <nav className="bg-white dark:bg-gray-900  fixed w-full md:h-[80px] h-[60px] z-50 top-0 left-0 border-b-2 border-gray-200 dark:border-gray-600">
+    <nav className="bg-white dark:bg-gray-900  fixed  w-full md:h-[80px] h-[60px] z-20 top-0 left-0 border-b-2 border-gray-200 dark:border-gray-600">
       <div className="relative z-50 w-full h-full">
         <div className="max-w-screen-xl flex flex-wrap  px-4 items-center h-full justify-between mx-auto ">
-          <Link to="/checkin" className="flex items-center">
-            <span className="self-center text-[#1C348A] text-2xl font-bold whitespace-nowrap dark:text-white">
-              TMA CHECKIN
-            </span>
-          </Link>
+          <div className="flex flex-row h-full items-center ">
+            <div className="h-full flex justify-center items-center pr-2">
+              <FontAwesomeIcon
+                className="text-[#1C348A] h-[30px] w-[30px] cursor-pointer"
+                onClick={ActiveSlidebar}
+                icon={faBars}
+                ref={slideRef}
+              />
+              {isSlidebarOpen && <SlideBar open={isDropdownOpen} />}
+            </div>
+            <Link to="/checkin" className="flex items-center">
+              <span className="self-center text-[#1C348A] text-2xl font-bold whitespace-nowrap dark:text-white">
+                TMA CHECKIN
+              </span>
+            </Link>
+          </div>
           <div className="flex md:order-2 w-[164px] justify-end">
             <div>
               <Link
@@ -121,4 +142,4 @@ function Snavbar() {
   );
 }
 
-export default Snavbar;
+export default Mnavbar;

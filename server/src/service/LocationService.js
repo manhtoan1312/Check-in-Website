@@ -36,7 +36,7 @@ class LocationService {
       return {
         success: false,
         status: 400,
-        message: "An error occurred",
+        message: "You have entered the same branch name",
       };
     }
   }
@@ -104,6 +104,26 @@ class LocationService {
       };
     }
   }
+  async getLocationByID(id){
+    try{
+      const result = await location.findOne({_id: id})
+      return{
+        status: 200,
+        success: true,
+        message: result,
+      }
+    }
+    catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        status: 400,
+        message: "An error occurred",
+      };
+    }
+  }
 }
+
+
 
 module.exports = LocationService;

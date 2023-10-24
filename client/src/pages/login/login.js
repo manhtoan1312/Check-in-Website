@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEyeSlash, faEye } from "@fortawesome/free-solid-svg-icons";
 import { login } from "~/service/AccountService";
 import { useAuth } from "~/hooks/AuthContext";
+import ToastMessage from "~/Components/ToastMessage";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -13,8 +14,12 @@ function Login() {
   const [hide, setHide] = useState(true);
   const [remember, setRemember] = useState(false);
   const navigate = useNavigate();
-  const { login: contextLogin } = useAuth(); 
-
+  const { login: contextLogin,isLoggedIn } = useAuth(); 
+  useEffect(()=> {
+    if(isLoggedIn){
+      navigate("/checkin");
+    }
+  },[])
   const handleEmail = (e) => {
     setEmail(e.target.value);
   };
@@ -42,11 +47,15 @@ function Login() {
       contextLogin(checked, response.token);
       navigate("/checkin");
     } else {
-      setErrorMessage(response.message);
+      setErrorMessage(response.message)
       setEmail("");
       setPassword("");
       document.querySelector("#floating_email").focus();
     }
+  };
+
+  const handleClose = () => {
+    setErrorMessage('')
   };
 
   return (
@@ -64,7 +73,7 @@ function Login() {
                 type="email"
                 name="floating_email"
                 id="floating_email"
-                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-[#676767] dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                className="block pt-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-[#676767] dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                 placeholder=" "
                 value={email}
                 required
@@ -82,7 +91,7 @@ function Login() {
                 type={hide ? "password" : "text"}
                 name="floating_password"
                 id="floating_password"
-                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-[#676767] dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                className="block pt-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-[#676767] dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                 placeholder=" "
                 required
                 value={password}
@@ -94,7 +103,7 @@ function Login() {
               >
                 Password
               </label>
-              <div className="absolute right-2.5 top-2.5">
+              <div className="absolute right-2.5 top-1.5">
                 <FontAwesomeIcon
                   onClick={changeTypePassword}
                   icon={hide ? faEyeSlash : faEye}
@@ -119,14 +128,14 @@ function Login() {
                   </label>
                 </div>
                 <Link
-                  to="/forgotpassword"
+                  to="/forgot"
                   className="ml-2 text-sm font-medium text-gray-900 hover:cursor-pointer text-right"
                 >
                   Forgot Password?
                 </Link>
               </div>
             </div>
-            {ErrorMessage && <p className="text-red-700">{ErrorMessage}</p>}
+            {ErrorMessage && <ToastMessage type={'ERROR'} message={ErrorMessage} hide={handleClose} />}
             <div className="pt-[32px] flex items-center justify-center">
               <button
                 type="submit"

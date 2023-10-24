@@ -12,48 +12,48 @@ account_router.get(
   verifyToken,
   AccountController.getOTP
 );
+
+account_router.get("/find/:id",verifyToken, AccountController.getAccountByID);
+account_router.post("/checkmail", AccountController.checkemail);
+
 account_router.get(
-  "/get-information",
+  "/get-infor",
   verifyToken,
   AccountController.getPersonalInformation
 );
-account_router.patch(
+account_router.put(
   "/forgot-password/update",
-  verifyToken,
   AccountController.changePasswordForgetPassword
 );
 
-account_router.patch(
-  "/update-infor/update-password",
+account_router.put(
+  "/update-password",
   verifyToken,
   AccountController.UpdatePassword
 );
-account_router.put(
+account_router.put( 
   "/update-infor",
   verifyToken,
   AccountController.UpdateInformation
 );
+account_router.put("/update",verifyToken, AccountController.updateEmployee);
 account_router.get("/all-user", verifyToken, AccountController.getAllUsers);
-account_router.get("/search-active/:key", verifyToken, AccountController.searchActiveEmployees)
-account_router.get("/search-unactive/:key", verifyToken, AccountController.searchUnActiveEmployees)
 account_router.get(
-  "/old-user",
+  "/search-active/:key",
   verifyToken,
-  AccountController.getAllOldUsers
+  AccountController.searchActiveEmployees
 );
-account_router.delete(
-  "/:id",
+account_router.get(
+  "/search-unactive/:key",
   verifyToken,
-  AccountController.deleteUser
+  AccountController.searchUnActiveEmployees
 );
+account_router.get("/old-user", verifyToken, AccountController.getAllOldUsers);
+account_router.delete("/:id", verifyToken, AccountController.deleteUser);
 account_router.delete(
   "/permanently-delete/:id",
   verifyToken,
   AccountController.permanentlyDeletUser
 );
-account_router.get(
-  "/restore/:id",
-  verifyToken,
-  AccountController.restoreUser
-);
+account_router.get("/restore/:id", verifyToken, AccountController.restoreUser);
 module.exports = account_router;

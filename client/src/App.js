@@ -1,18 +1,16 @@
 import { Fragment, React }  from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/AuthContext";
 import getRoutes from "./routes";
-
 function App() {
   const { isLoggedIn } = useAuth(); 
   const appRoutes = getRoutes(isLoggedIn); 
-
   return (
     <Router>
       <div className="App relative">
         <Routes>
           {appRoutes.map((router, index) => {
-            const Layout = router.layout === null ? Fragment : Fragment;
+            const Layout = router.layout === null ? Fragment : router.layout;
             const Page = router.component;
             return (
               <Route

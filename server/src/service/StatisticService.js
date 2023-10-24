@@ -8,23 +8,22 @@ class StatisticService {
   async getPersonalWorkday(email, month, start, end) {
     try {
       const findAccount = await accounts.findOne({ email: email });
-  
       if (!findAccount) {
         return {
           success: false,
           message: "Account was not found, please log in again",
         };
       }
-  
       const now = new Date();
       const year = now.getFullYear().toString();
       const startDate = start ? start : new Date(year, month - 1, 1, 0, 0, 0);
       const endDate = end ? end : new Date(year, month, 1, 0, 0, 0);
       let totalLateDays = 0;
+      let totalCheckins = 0;
       let totalLeaveDays = 0;
       let totalFee = 0;
       const result = [];
-  
+      
       const workDayInMonth = await work_day.aggregate([
         {
           $match: {
@@ -35,7 +34,7 @@ class StatisticService {
           },
         },
       ]);
-  
+    
       for (const dayOfWork of workDayInMonth) {
         let checkday;
         for (const check of dayOfWork.checkin) {
@@ -46,10 +45,10 @@ class StatisticService {
             break;
           }
         }
-  
         
         const createdDate = findAccount.create_at;
-        if (checkday) {      
+        if (checkday) {   
+          totalCheckins++   
           if (checkday.late) {
             totalLateDays++;
             totalFee += checkday.fee;
@@ -77,13 +76,13 @@ class StatisticService {
           result.push(newRecord);
         }
       }
-  
       return {
         success: true,
         data: {
           email: email,
           detail: result,
           summary: {
+            totalCheckins,
             totalLateDays,
             totalLeaveDays,
             totalFee,
@@ -256,6 +255,7 @@ class StatisticService {
         const userStats = {
           name: user.name,
           email: "",
+          totalCheckins:0,
           totalLeaveDays: 0,
           totalLateDays: 0,
           totalFee: 0,
@@ -277,6 +277,7 @@ class StatisticService {
             }
           } else {
             const checkin = userCheckins[0];
+            userStats.totalCheckins++;
             if (checkin.late) {
               userStats.totalLateDays += 1;
             }

@@ -53,7 +53,7 @@ class CheckinService {
   async checkin(user, userlocation) {
     try {
       const { latitude, longitude } = userlocation;
-      const locates = await location.find({  });
+      const locates = await location.find({});
       let check = false;
       let check_location;
       locates.forEach((locate) => {
@@ -73,7 +73,7 @@ class CheckinService {
       if (check) {
         const now = new Date();
         let time = now.getHours();
-        let timecheckin ;
+        let timecheckin;
         let fine;
         let message = `Check in successfully at ${check_location}`;
         const today = new Date();
@@ -86,65 +86,65 @@ class CheckinService {
           //not error
           if (!result.error) {
             //ìf checked in
-            if (result.success && result.checked) {
-              return {
-                success: false,
-                message: "You checked in today!!!",
-              };
-            }
-            //if Haven't checked in yet
-            else {
-              if (now.getMonth == 0 && now.getDate == FIRST_WORK_DAY) {
-                await checkin.deleteMany({});
+              if (result.checked) {
+                return {
+                  success: false,
+                  message: "You checked in today!!!",
+                };
               }
-              const usercheckin = {
-                employee: account._id,
-                late: time >= CHECKIN_TIME ? true : false,
-                fee:
-                  time >= CHECKIN_TIME ? (finduser.pine_times + 1) * 10000 : 0,
-              };
-              const newcheckin = await checkin.create(usercheckin);
-              timecheckin = newcheckin.time;
-              fine= newcheckin.fee;
-              //checkin late
-              if (time >= CHECKIN_TIME) {
-                await users.updateOne(
-                  { _id: finduser._id },
-                  {
-                    $set: {
-                      pine_times:
-                        finduser.pine_times + 1 >= 4
-                          ? 0
-                          : finduser.pine_times + 1,
-                    },
-                  }
-                );
-                message = `You were late. Check in successfully at ${check_location}`;
-              }
-              //if checkin date does not exist yet
-              if (!result.success) {
-                //If this is the first working day of the year
-                if (now.getMonth == 0 && now.getDate == FIRST_WORK_DAY) {
-                  await work_day.deleteMany({});
-                  await checkin.deleteMany({});
-                }
-                const newWorkDay = { day: today, checkin: [newcheckin._id] };
-                await work_day.create(newWorkDay);
-              }
-              //if checkin date already exists
+              //if Haven't checked in yet
               else {
-                await work_day.updateOne(
-                  { day: today },
-                  { $push: { checkin: newcheckin._id } }
-                );
+                const usercheckin = {
+                  employee: account._id,
+                  late: time >= CHECKIN_TIME ? true : false,
+                  fee:
+                    time >= CHECKIN_TIME
+                      ? (finduser.pine_times + 1) * 10000
+                      : 0,
+                };
+                const newcheckin = await checkin.create(usercheckin);
+                timecheckin = newcheckin.time;
+                fine = newcheckin.fee;
+                //checkin late
+                if (time >= CHECKIN_TIME) {
+                  await users.updateOne(
+                    { _id: finduser._id },
+                    {
+                      $set: {
+                        pine_times:
+                          finduser.pine_times + 1 >= 4
+                            ? 0
+                            : finduser.pine_times + 1,
+                      },
+                    }
+                  );
+                  message = `You was late. Check in successfully at ${check_location}`;
+                }       
+                //if checkin date does not exist yet
+                if (!result.success) {
+                  //If this is the first working day of the year
+                  if (now.getMonth == 0 && now.getDate == FIRST_WORK_DAY) {
+                    await work_day.deleteMany({});
+                    await checkin.deleteMany({});
+                  }
+                  const newWorkDay = { day: today, checkin: [newcheckin._id] };
+                  await work_day.create(newWorkDay);
+                }
+                //if checkin date already exists
+                else {
+                  await work_day.updateOne(
+                    { day: today },
+                    { $push: { checkin: newcheckin._id } }
+                  );
+                }
+                return {
+                  success: true,
+                  message: message,
+                  time: timecheckin,
+                  fine: fine,
+                };
               }
-              return {
-                success: true,
-                message: message,
-                time: timecheckin,
-                fine: fine,
-              };
-            }
+            
           } else {
             return {
               success: false,
