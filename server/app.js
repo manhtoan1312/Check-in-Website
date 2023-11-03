@@ -24,6 +24,7 @@ app.use("/auth", accountRoute);
 app.use("/checkin", checkinRoute);
 app.use("/get-workday", statisticRoute);
 app.use("/location", locationRoute);
+  
 app.listen('9000','0.0.0.0',()=>{
   console.log("server is listening on 9000 port");
 })

@@ -56,7 +56,7 @@ class CheckinService {
       const locates = await location.find({});
       let check = false;
       let check_location;
-      locates.forEach((locate) => {
+      for (const locate of locates) {
         const distance = getDistanceFromLatLonInKm(
           locate.Coordinate.Latitude,
           locate.Coordinate.Longitude,
@@ -66,9 +66,9 @@ class CheckinService {
         if (distance < MIN_CHECKIN_DISTANCE) {
           check = true;
           check_location = locate.branch;
-          return;
+          break; 
         }
-      });
+      }
       //checking in in a valid area
       if (check) {
         const now = new Date();

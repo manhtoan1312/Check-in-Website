@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   DownloadAllbyDate,
   getStatisticall,
@@ -38,7 +38,7 @@ export default function MStatisitc() {
 
   const [detail, setDetail] = useState([]);
   const [summary, setSummay] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(["all"]);
   const [isMonthdownOpen, setIsMonthdownOpen] = useState(false);
   const [isTabledownOpen, setIsTabledownOpen] = useState(false);
   const [isUserOpen, setIsUserOpen] = useState(false);
@@ -51,10 +51,19 @@ export default function MStatisitc() {
   const [emailSelected, setEmailSelected] = useState("all");
   const [tableType, setTableType] = useState("DETAILED STATISTICS");
   const [errorMessage, setErrorMessage] = useState("");
+  const [key, setKey] = useState("");
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [uPage, setUPage] = useState(1);
+  const [uSize, setUSize] = useState(0);
+  const [uLoading, setULoading] = useState(false);
+  const [empSize, setEmpSize] = useState(0)
   const monthdownRef = useRef(null);
   const emaildownRef = useRef(null);
   const TabledownRef = useRef(null);
-
+  const bottomEmailRef = useRef(null);
+  const bottomTableRef = useRef(null);
   function formatDateToYYYMMDD(date) {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -63,10 +72,14 @@ export default function MStatisitc() {
     return `${year}-${month}-${day}`;
   }
   async function getAllWorkday(month) {
-    const response = await getStatisticall(month);
+    const response = await getStatisticall(month, 1);
+    setLoading(false);
     if (response.success) {
       setDetail(response.detail);
       setSummay(response.summary);
+      setSize(response.size);
+      setPage(2);
+      setEmpSize(response.empSize)
     } else {
       setErrorMessage(response.message);
     }
@@ -85,62 +98,70 @@ export default function MStatisitc() {
     setErrorMessage("");
   };
 
-  const handleMonthSelect = useCallback(
-    (month) => {
-      setMonth(month);
-      setIsMonthdownOpen(false);
-    },
-    [setMonth, setIsMonthdownOpen]
-  );
+  const handleMonthSelect = (month) => {
+    setMonth(month);
+    setIsMonthdownOpen(false);
+  };
 
-  const handleUserSelect = async (user) => {  
-      let rs;
-      if (user === "all") {
-        rs = await MgetAllbyDate(startDate, endDate);
-      } else {
-        rs = await MgetWorkDaybyDate(user, startDate, endDate);
-      }
+  const handleUserSelect = async (user) => {
+    let rs;
+    if (user === "all") {
+      rs = await MgetAllbyDate(1, startDate, endDate);
+    } else {
+      rs = await MgetWorkDaybyDate(user, startDate, endDate);
+    }
+    if (rs.success) {
+      setPage(1);
+      setSummay(rs.summary);
+      setDetail(rs.detail);
+      setSize(rs?.size ? rs.size : 0);
+    } else {
+      setErrorMessage(rs.message);
+    }
+    setEmailSelected(user);
+    setIsUserOpen(false);
+  };
+
+  const getNextData = async () => {
+    const rs = await MgetAllbyDate(page, startDate, endDate);
+    if (rs.success) {
+      setPage(page + 1);
+      setDetail([...detail, ...rs.detail]);
+      setSummay([...summary, ...rs.summary]);
+      setSize(rs.size);
+    } else {
+      setErrorMessage(rs.message);
+    }
+  };
+  const handleSearch = async () => {
+    let response;
+    if (emailSelected === "all") {
+      const rs = await MgetAllbyDate(1, startDate, endDate);
       if (rs.success) {
-        setSummay(rs.summary);
+        setPage(2);
         setDetail(rs.detail);
+        setSummay(rs.summary);
+        setSize(rs.size);
       } else {
         setErrorMessage(rs.message);
       }
-      setEmailSelected(user);
-      setIsUserOpen(false);
-    }
-
-  const handleSearch = useCallback(async () => {
-    let response;
-    if (emailSelected === "all") {
-      response = await MgetAllbyDate(startDate, endDate);
     } else {
       response = await MgetWorkDaybyDate(emailSelected, startDate, endDate);
+      if (response.success) {
+        setDetail(response.detail);
+        setSummay(response.summary);
+      } else {
+        setErrorMessage(response.message);
+      }
     }
-    if (response.success) {
-      setDetail(response.detail);
-      setSummay(response.summary);
-    } else {
-      setErrorMessage(response.message);
-    }
-  }, [
-    MgetAllbyDate,
-    startDate,
-    endDate,
-    setDetail,
-    setSummay,
-    setErrorMessage,
-  ]);
+  };
 
-  const handleTypeTable = useCallback(
-    (e) => {
-      setTableType(e);
-      setIsTabledownOpen(false);
-    },
-    [setTableType, setIsTabledownOpen]
-  );
+  const handleTypeTable = (e) => {
+    setTableType(e);
+    setIsTabledownOpen(false);
+  };
 
-  const handleDownloadFile = useCallback(async () => {
+  const handleDownloadFile = async () => {
     let rs;
     if (emailSelected === "all") {
       rs = await DownloadAllbyDate(startDate, endDate);
@@ -150,28 +171,25 @@ export default function MStatisitc() {
     if (!rs?.success) {
       setErrorMessage(rs?.message);
     }
-  }, [
-    emailSelected,
-    startDate,
-    endDate,
-    DownloadAllbyDate,
-    MDownloadPbyDate,
-    setErrorMessage,
-  ]);
+  };
   const toggleDropdown = () => {
     setIsMonthdownOpen(!isMonthdownOpen);
   };
 
+  const fetchData = async () => {
+    const rs = await getAllActiveUser(uPage);
+    setLoading(false);
+    if (rs.success) {
+      const newUserList = [...users, ...rs.data.map((item) => item.email)];
+      setUsers(newUserList);
+      setUSize(rs.size);
+      setUPage(uPage + 1);
+    } else {
+      setErrorMessage(rs.message);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      const rs = await getAllActiveUser();
-      if (rs.success) {
-        const newUserList = ["all", ...rs.data.map((item) => item.email)];
-        setUsers(newUserList);
-      } else {
-        setErrorMessage(rs.message);
-      }
-    };
     fetchData();
     getAllWorkday(now.getMonth() + 1);
     const handleClickOutside = (event) => {
@@ -203,6 +221,56 @@ export default function MStatisitc() {
   }, []);
 
   useEffect(() => {
+    if (bottomEmailRef.current) {
+      const handleTableScroll = () => {
+        const table = bottomEmailRef.current;
+        const isAtBottom =
+          table.scrollTop + table.clientHeight >= table.scrollHeight;
+        if (isAtBottom && !uLoading && users.length < uSize) {
+          fetchData();
+        }
+      };
+      bottomEmailRef.current.addEventListener("scroll", handleTableScroll);
+      return () => {
+        if (bottomEmailRef.current) {
+          bottomEmailRef.current.removeEventListener(
+            "scroll",
+            handleTableScroll
+          );
+        }
+      };
+    }
+  }, [uLoading, users, uSize, bottomEmailRef]);
+
+  useEffect(() => {
+    if (emailSelected === "all") {
+      if (bottomTableRef.current) {
+        const handleTableScroll = () => {
+          const table = bottomTableRef.current;
+          const isAtBottom =
+            table.scrollTop + table.clientHeight >= table.scrollHeight;
+          if (
+            isAtBottom &&
+            !loading &&
+            (detail.length < size || summary.length < empSize)
+          ) {
+            getNextData();
+          }
+        };
+        bottomTableRef.current.addEventListener("scroll", handleTableScroll);
+        return () => {
+          if (bottomTableRef.current) {
+            bottomTableRef.current.removeEventListener(
+              "scroll",
+              handleTableScroll
+            );
+          }
+        };
+      }
+    }
+  }, [loading, detail, summary, size, bottomTableRef]);
+
+  useEffect(() => {
     const monthIndex = months.findIndex((item) => item === month);
 
     if (emailSelected == "all") {
@@ -217,13 +285,10 @@ export default function MStatisitc() {
     setEndMonth(formatDateToYYYMMDD(end));
   }, [month]);
 
-  
   useEffect(() => {
-    const changeData = async() => {
-      
-    }
-    changeData()
-  },[emailSelected])
+    const changeData = async () => {};
+    changeData();
+  }, [emailSelected]);
   if (errorMessage) {
     return (
       <MessageBox
@@ -255,7 +320,8 @@ export default function MStatisitc() {
               }`}
             >
               <div
-                className=""
+                className="max-h-64 overflow-y-scroll"
+                ref={bottomEmailRef}
                 role="menu"
                 aria-orientation="vertical"
                 aria-labelledby="options-menu"
@@ -263,7 +329,7 @@ export default function MStatisitc() {
                 {users.map((user, index) => (
                   <div
                     key={index}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer "
                     onClick={() => handleUserSelect(user)}
                   >
                     {user}
@@ -401,13 +467,17 @@ export default function MStatisitc() {
           </div>
         </div>
       )}
-
-      {tableType === "DETAILED STATISTICS" && emailSelected === "all" && (
-        <StatisticDetail detail={detail} />
-      )}
-      {tableType === "GENERAL STATISTICS" && emailSelected === "all" && (
-        <StatisticGeneral summary={summary} />
-      )}
+      <div
+        className="overflow-x-auto overflow-y-auto max-h-[500px] mt-5 shadow-md sm:rounded-lg"
+        ref={bottomTableRef}
+      >
+        {tableType === "DETAILED STATISTICS" && emailSelected === "all" && (
+          <StatisticDetail detail={detail} />
+        )}
+        {tableType === "GENERAL STATISTICS" && emailSelected === "all" && (
+          <StatisticGeneral summary={summary} />
+        )}
+      </div>
       {emailSelected !== "all" && (
         <PersonalStatistic detail={detail} summary={summary} />
       )}

@@ -3,7 +3,7 @@ const checkin = require("../model/checkin");
 const users = require("../model/users");
 const work_day = require("../model/work_day");
 const ExcelJS = require("exceljs");
-
+const { STATISTIC_PAGE_SIZE, EMPLOYEE_PAGE_SIZE } = process.env;
 class StatisticService {
   async getPersonalWorkday(email, month, start, end) {
     try {
@@ -23,7 +23,7 @@ class StatisticService {
       let totalLeaveDays = 0;
       let totalFee = 0;
       const result = [];
-      
+
       const workDayInMonth = await work_day.aggregate([
         {
           $match: {
@@ -34,7 +34,7 @@ class StatisticService {
           },
         },
       ]);
-    
+
       for (const dayOfWork of workDayInMonth) {
         let checkday;
         for (const check of dayOfWork.checkin) {
@@ -45,34 +45,33 @@ class StatisticService {
             break;
           }
         }
-        
+
         const createdDate = findAccount.create_at;
-        if (checkday) {   
-          totalCheckins++   
+        if (checkday) {
+          totalCheckins++;
           if (checkday.late) {
             totalLateDays++;
             totalFee += checkday.fee;
           }
           const newRecord = {
             day: dayOfWork.day,
-            time:  checkday.time,
+            time: checkday.time,
             off: false,
             late: checkday.late,
             fee: checkday.fee,
           };
-          
+
           result.push(newRecord);
-        }
-        else if(createdDate <= dayOfWork.day){
+        } else if (createdDate <= dayOfWork.day) {
           totalLeaveDays++;
           const newRecord = {
             day: dayOfWork.day,
-            time:  '',
+            time: "",
             off: true,
             late: false,
             fee: 0,
           };
-          
+
           result.push(newRecord);
         }
       }
@@ -98,13 +97,15 @@ class StatisticService {
     }
   }
 
-  async getMonthlyStatistics(month, start, end) {
+  async getMonthlyStatistics(month, page, start, end) {
     try {
       const now = new Date();
       const year = now.getFullYear().toString();
-      const startDate = start ? start : new Date(year, month - 1, 1, 0, 0, 0);
-      const endDate = end ? end : new Date(year, month, 1, 0, 0, 0);
+      const startDate = start ? start : new Date(year, month - 1);
+      const endDate = end ? end : new Date(year, month);
       const enabledUsers = await users.find({ enable: true });
+      const npage = parseInt(page);
+      const skip = (npage - 1) * STATISTIC_PAGE_SIZE;
       if (enabledUsers) {
         const workDaysInMonth = await work_day
           .find({
@@ -119,15 +120,38 @@ class StatisticService {
               path: "employee",
               model: "accounts",
             },
+          })
+          .skip(skip)
+          .limit(STATISTIC_PAGE_SIZE);
+        //console.log(workDaysInMonth)
+        const workDaysInMonth2 = await work_day
+          .find({
+            day: {
+              $gte: startDate,
+              $lt: endDate,
+            },
+          })
+          .populate({
+            path: "checkin",
+            populate: {
+              path: "employee",
+              model: "accounts",
+            },
           });
+        const size = workDaysInMonth2.length;
         const result1 = await this.getMonthlyStatistics1(workDaysInMonth);
-        const result2 = await this.getMonthlyStatistics2(workDaysInMonth);
+        const result2 = await this.getMonthlyStatistics2(
+          workDaysInMonth2,
+          page
+        );
         if (result1.success && result2.success) {
           return {
             success: true,
             data: {
               detail: result1?.data,
               summary: result2?.data,
+              size: size,
+              empSize:result2?.empSize
             },
           };
         }
@@ -145,7 +169,6 @@ class StatisticService {
       };
     }
   }
-  
 
   async getMonthlyStatistics1(workDaysInMonth) {
     try {
@@ -155,9 +178,12 @@ class StatisticService {
         const usersOnLeave = [];
         const date = workDay.day;
         const checkins = workDay.checkin;
-  
+
         const validCheckins = checkins.filter(async (check) => {
-          const user = await users.findOne({ _id: check.employee.user, enable: true });
+          const user = await users.findOne({
+            _id: check.employee.user,
+            enable: true,
+          });
           if (user) {
             const account = await accounts.findOne({ user: user._id });
             if (account.create_at <= date) {
@@ -166,7 +192,7 @@ class StatisticService {
           }
           return false;
         });
-  
+
         const totalCheckins = validCheckins.length;
         const lateCheckins = validCheckins.filter((check) => check.late).length;
         const onTimeCheckins = totalCheckins - lateCheckins;
@@ -174,15 +200,15 @@ class StatisticService {
           (total, check) => total + check.fee,
           0
         );
-  
+
         const lateEmployees = [];
         const onTimeEmployees = [];
-  
+
         for (const user of enabledUsers) {
           const hasCheckin = checkins.some((check) =>
             check.employee.user.equals(user._id)
           );
-  
+
           if (!hasCheckin) {
             const account = await accounts.findOne({ user: user._id });
             if (account.create_at <= date) {
@@ -207,7 +233,7 @@ class StatisticService {
                 fee: check.fee,
                 time: check.time,
               };
-  
+
               if (check.late) {
                 lateEmployees.push(employeeInfo);
               } else {
@@ -228,10 +254,10 @@ class StatisticService {
           onTimeEmployees: onTimeEmployees,
           onLeave: usersOnLeave,
         };
-  
+
         monthlyStatistics.push(dailyStatistics);
       }
-  
+
       return {
         success: true,
         data: monthlyStatistics,
@@ -244,32 +270,36 @@ class StatisticService {
       };
     }
   }
-  
 
-
-  async getMonthlyStatistics2(workDaysInMonth) {
+  async getMonthlyStatistics2(workDaysInMonth, page) {
     try {
       const monthlyStatistics = [];
-      const enabledUsers = await users.find({ enable: true });
+      const skip = (page - 1) * EMPLOYEE_PAGE_SIZE;
+      const enabledUsers = await users
+        .find({ enable: true })
+        .skip(skip)
+        .limit(EMPLOYEE_PAGE_SIZE);
+
+      const lenght = await users.find({ enable: true }).countDocuments();
       for (const user of enabledUsers) {
         const userStats = {
           name: user.name,
           email: "",
-          totalCheckins:0,
+          totalCheckins: 0,
           totalLeaveDays: 0,
           totalLateDays: 0,
           totalFee: 0,
         };
-  
+
         const account = await accounts.findOne({ user: user._id });
         userStats.email = account.email;
-  
+
         for (const workDay of workDaysInMonth) {
           const checkins = workDay.checkin;
           const userCheckins = checkins.filter((check) =>
             check.employee.user.equals(user._id)
           );
-  
+
           if (userCheckins.length === 0) {
             const createdDate = account.create_at;
             if (createdDate <= workDay.day) {
@@ -286,10 +316,11 @@ class StatisticService {
         }
         monthlyStatistics.push(userStats);
       }
-  
+
       return {
         success: true,
         data: monthlyStatistics,
+        empSize: lenght
       };
     } catch (error) {
       console.error(error);
@@ -299,7 +330,6 @@ class StatisticService {
       };
     }
   }
-  
 
   async exportPersonalExcelFile(email, month, start, end) {
     try {

@@ -42,9 +42,9 @@ const InsertEmployee = () => {
     if (result.success) {
       setType("SUCCESS");
       setMessage(result.message);
-      setTimeout(() => {
-        navigate("/m-employees");
-      }, 4000);
+      // setTimeout(() => {
+      //   navigate("/m-employees");
+      // }, 4000);
     } else {
       setType("ERROR");
       setMessage(result.message);

@@ -25,9 +25,9 @@ module.exports = {
   get_Monthly_Statistics: async (req, res) => {
     const user = req.user;
     if (user.role == "MANAGER") {
-      let month = req.params.month;
+      let {month , page} = req.params;
       const statisticService = new StatisticService();
-      const result = await statisticService.getMonthlyStatistics(month);
+      const result = await statisticService.getMonthlyStatistics(month, page);
       if (result?.success) {
         res.status(200).json(result);
         return;
@@ -124,9 +124,10 @@ module.exports = {
       let start = new Date(req.params.start);
       start.setDate(start.getDate()-1);
       let end = new Date(req.params.end);
+      const page = parseInt(req.params.page)
       const statisticService = new StatisticService();
       const result = await statisticService.getMonthlyStatistics(
-        0,
+        0,page,
         start,
         end
       );

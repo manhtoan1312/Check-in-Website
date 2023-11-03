@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import MessageBox from "./MessageBox";
 import { deleteEmployee } from "~/service/AccountService";
 import { useNavigate } from "react-router-dom";
-const EmpTable = ({ employees }) => {
+const EmpTable = ({ employees, firstItemRef }) => {
   const roleList = ["ROLE", "MANAGER", "STAFF"];
   const [role, setRole] = useState("ROLE");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -79,85 +79,87 @@ const EmpTable = ({ employees }) => {
           title={title}
         />
       )}
-      <div className="relative overflow-x-auto max-h-[500px] min-h-[200px] mt-5">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 sticky top-0 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-            <tr>
-              <th scope="col" className="px-6 py-3">
-                Email
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Name
-              </th>
-              <th scope="col" className="px-6 py-3 relative">
-                <div
-                  className="flex justify-center items-center"
-                  ref={dropdownRef}
-                >
-                  {role}
-                  <FontAwesomeIcon
-                    className="pl-2 cursor-pointer"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    icon={faAngleDown}
-                  />
-                </div>
-                <div
-                  className={`absolute mt-2 top-9  w-full z-20 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 ${
-                    isDropdownOpen ? "block" : "hidden"
-                  }`}
-                >
-                  <div
-                    className=""
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="options-menu"
-                  >
-                    {roleList.map((item) => (
-                      <div
-                        key={item}
-                        className="block font-normal px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
-                        onClick={() => {
-                          setRole(item);
-                          setIsDropdownOpen(false);
-                        }}
-                      >
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Gender
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Phone
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Address
-              </th>
-              <th scope="col" className="px-6 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEmployees?.map((item, index) => (
-              <tr
-                key={index}
-                onClick={() => handleUpdate(item._id)}
-                className="bg-white border-b hover:bg-gray-300 cursor-pointer dark:bg-gray-800 dark:border-gray-700"
+
+      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+        <thead className="text-xs text-gray-700 sticky top-0 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+          <tr>
+            <th scope="col" className="px-6 py-3">
+              Email
+            </th>
+            <th scope="col" className="px-6 py-3">
+              Name
+            </th>
+            <th scope="col" className="px-6 py-3 relative">
+              <div
+                className="flex justify-center items-center"
+                ref={dropdownRef}
               >
-                <td
-                  scope="row"
-                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                {role}
+                <FontAwesomeIcon
+                  className="pl-2 cursor-pointer"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  icon={faAngleDown}
+                />
+              </div>
+              <div
+                className={`absolute mt-2 top-9  w-full z-20 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 ${
+                  isDropdownOpen ? "block" : "hidden"
+                }`}
+              >
+                <div
+                  className=""
+                  role="menu"
+                  aria-orientation="vertical"
+                  aria-labelledby="options-menu"
                 >
-                  {item.email}
-                </td>
-                <td className="px-6 py-4">{item.user.name}</td>
-                <td className="px-6 py-4 flex justify-center">
+                  {roleList.map((item) => (
+                    <div
+                      key={item}
+                      className="block font-normal px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
+                      onClick={() => {
+                        setRole(item);
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </th>
+            <th scope="col" className="px-6 py-3">
+              Gender
+            </th>
+            <th scope="col" className="px-6 py-3">
+              Phone
+            </th>
+            <th scope="col" className="px-6 py-3">
+              Address
+            </th>
+            <th scope="col" className="px-6 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredEmployees?.map((item, index) => (
+            <tr
+              key={index}
+              ref={index === 0 ? firstItemRef : null}
+              onClick={() => handleUpdate(item._id)}
+              className="bg-white border-b hover:bg-gray-300 cursor-pointer dark:bg-gray-800 dark:border-gray-700"
+            >
+              <td
+                scope="row"
+                className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+              >
+                {item.email}
+              </td>
+              <td className="px-6 py-4">{item.user.name}</td>
+              <td className="px-6 py-4">
+                <div className="h-full w-full flex justify-center items-center">
                   {item.role === "MANAGER" && (
                     <button
                       type="button"
-                      className="text-white cursor-auto bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+                      className="text-white cursor-auto bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
                     >
                       {item.role}
                     </button>
@@ -170,27 +172,27 @@ const EmpTable = ({ employees }) => {
                       {item.role}
                     </button>
                   )}
-                </td>
-                <td className="px-6 py-4">{item.user.gender}</td>
-                <td className="px-6 py-4">{item.user.phone}</td>
-                <td className="px-6 py-4">{item.user.address}</td>
-                <td
-                  className="px-6 py-4"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteEmp(e, item);
-                  }}
-                >
-                  <FontAwesomeIcon
-                    className="text-xl cursor-pointer"
-                    icon={faTrashCan}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              </td>
+              <td className="px-6 py-4">{item.user.gender}</td>
+              <td className="px-6 py-4">{item.user.phone}</td>
+              <td className="px-6 py-4">{item.user.address}</td>
+              <td
+                className="px-6 py-4"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteEmp(e, item);
+                }}
+              >
+                <FontAwesomeIcon
+                  className="text-xl cursor-pointer"
+                  icon={faTrashCan}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

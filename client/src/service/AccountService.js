@@ -172,10 +172,10 @@ async function checkmail(email) {
   }
 }
 
-async function getAllActiveUser() {
+async function getAllActiveUser(page) {
   try {
     const role = getRole();
-    const response = await fetch(`${url}/all-user`, {
+    const response = await fetch(`${url}/all-user/${page}`, {
       method: "get",
       headers: {
         "Content-Type": "application/json",
@@ -184,9 +184,9 @@ async function getAllActiveUser() {
     });
     const data = await response.json();
     if (response.status === 200) {
-      return { success: true, data: data };
+      return { success: true, data: data.data, size:data.size };
     } else {
-      return { success: false, message: data.message };
+      return { success: false, message: data.data.message };
     }
   } catch (err) {
     console.log(err);
@@ -266,11 +266,11 @@ async function updateEmployee(employee, changepassword) {
   }
 }
 
-async function searchActiveEmployees(key) {
+async function searchActiveEmployees(key,page) {
   try {
     const newkey = key.replace(" ", "+");
     const user = getRole();
-    const response = await fetch(`${url}/search-active/${newkey}`, {
+    const response = await fetch(`${url}/search-active/${newkey}/${page}`, {
       method: "get",
       headers: {
         "Content-Type": "application/json",
@@ -279,7 +279,7 @@ async function searchActiveEmployees(key) {
     });
     const data = await response.json();
     if (response.status === 200) {
-      return { success: true, result: data.result };
+      return { success: true, data: data.data, size:data.size };
     } else {
       return { success: false, message: data.message };
     }
@@ -333,10 +333,10 @@ async function FindAccountbyID(id) {
   }
 }
 
-async function GetOldEmployee() {
+async function GetOldEmployee(page) {
   try {
     const role = getRole();
-    const response = await fetch(`${url}/old-user`, {
+    const response = await fetch(`${url}/old-user/${page}`, {
       method: "get",
       headers: {
         "Content-Type": "application/json",
@@ -345,7 +345,7 @@ async function GetOldEmployee() {
     });
     const data = await response.json();
     if (response.status === 200) {
-      return { success: true, data: data };
+      return { success: true, data: data.data, size:data.size };
     } else {
       return { success: false, message: data.message };
     }
@@ -355,11 +355,11 @@ async function GetOldEmployee() {
   }
 }
 
-async function SearchUnactiveEmployees(key) {
+async function SearchUnactiveEmployees(key, page) {
   try {
     const newkey = key.replace(" ", "+");
     const user = getRole();
-    const response = await fetch(`${url}/search-unactive/${newkey}`, {
+    const response = await fetch(`${url}/search-unactive/${newkey}/${page}`, {
       method: "get",
       headers: {
         "Content-Type": "application/json",
@@ -367,8 +367,9 @@ async function SearchUnactiveEmployees(key) {
       },
     });
     const data = await response.json();
+    
     if (response.status === 200) {
-      return { success: true, result: data.result };
+      return { success: true, data: data.data, size:data.size };
     } else {
       return { success: false, message: data.message };
     }

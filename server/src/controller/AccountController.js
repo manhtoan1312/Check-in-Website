@@ -250,14 +250,15 @@ module.exports = {
   getAllUsers: async (req, res) => {
     try {
       const role = req.user.role;
+      const page = req.params.page;
       if (role == "MANAGER") {
         const accountService = new AccountService();
-        const result = await accountService.getAllUsers();
+        const result = await accountService.getAllUsers(page);
         if (result?.success) {
-          res.status(200).json(result?.data);
+          res.status(200).json(result);
           return;
         } else {
-          res.status(400).json({ success: false, message: result?.message });
+          res.status(500).json({ success: false, message: result?.message });
           return;
         }
       } else {
@@ -344,10 +345,11 @@ module.exports = {
     try {
       const role = req.user.role;
       if (role == "MANAGER") {
+        const page = parseInt(req.params.page)
         const accountService = new AccountService();
-        const result = await accountService.getAllOldUsers();
+        const result = await accountService.getAllOldUsers(page);
         if (result?.success) {
-          res.status(200).json(result?.data);
+          res.status(200).json(result);
           return;
         } else {
           res.status(400).json({ success: false, message: result?.message });
@@ -442,12 +444,12 @@ module.exports = {
     try {
       const role = req.user.role;
       if (role == "MANAGER") {
-        const key = req.params.key;
-        const newkey = key.replace("+", " ");
+        const {key, page} = req.params;
         const accountService = new AccountService();
-        const result = await accountService.SearchActiveAccount(newkey);
+        const result = await accountService.SearchActiveAccount(key,page);
         res.status(200).json({
-          result,
+          data: result.result,
+          size: result.totalMatchingCount
         });
         return;
       } else {
@@ -466,12 +468,13 @@ module.exports = {
     try {
       const role = req.user.role;
       if (role == "MANAGER") {
-        const key = req.params.key;
+        const {key, page} = req.params;
         const newkey = key.replace("+", " ");
         const accountService = new AccountService();
-        const result = await accountService.SearchUnactiveAccount(newkey);
+        const result = await accountService.SearchUnactiveAccount(newkey, page);
         res.status(200).json({
-          result,
+          data: result.data,
+          size: result.size
         });
         return;
       } else {

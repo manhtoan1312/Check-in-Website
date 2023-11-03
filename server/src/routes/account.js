@@ -37,18 +37,18 @@ account_router.put(
   AccountController.UpdateInformation
 );
 account_router.put("/update",verifyToken, AccountController.updateEmployee);
-account_router.get("/all-user", verifyToken, AccountController.getAllUsers);
+account_router.get("/all-user/:page", verifyToken, AccountController.getAllUsers);
 account_router.get(
-  "/search-active/:key",
+  "/search-active/:key/:page",
   verifyToken,
   AccountController.searchActiveEmployees
 );
 account_router.get(
-  "/search-unactive/:key",
+  "/search-unactive/:key/:page",
   verifyToken,
   AccountController.searchUnActiveEmployees
 );
-account_router.get("/old-user", verifyToken, AccountController.getAllOldUsers);
+account_router.get("/old-user/:page", verifyToken, AccountController.getAllOldUsers);
 account_router.delete("/:id", verifyToken, AccountController.deleteUser);
 account_router.delete(
   "/permanently-delete/:id",

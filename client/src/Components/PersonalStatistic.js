@@ -12,9 +12,9 @@ export default function PersonalStatistic({detail, summary}) {
   }
   return (
     <div>
-      <div className=" overflow-x-auto mt-5 shadow-md sm:rounded-lg">
+      <div className=" overflow-x-auto mt-5 shadow-md max-h-[500px] sm:rounded-lg">
         <table className="md:w-full  text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-white uppercase bg-[#06B5C0] dark:bg-[#06B5C0] dark:text-white">
+          <thead className="text-xs text-white sticky top-0  uppercase bg-[#06B5C0] dark:bg-[#06B5C0] dark:text-white">
             <tr>
               <th scope="col" className="px-6 py-3">
                 Day
@@ -59,7 +59,7 @@ export default function PersonalStatistic({detail, summary}) {
           </tbody>
         </table>
       </div>
-      <div className="flex flex-col items-end w-full mt-16 pt-4 text-gray-800 border-t-2 border-gray-600 ">
+      <div className="flex flex-col items-end w-full mt-4 pt-4 text-gray-800 border-t-2 border-gray-600 ">
         <div className="w-[160px] font-medium text-lg pb-2">Summary: </div>
         <div className="flex justify-between w-[160px] pr-3">
           <div className="">Total Checkins: </div>

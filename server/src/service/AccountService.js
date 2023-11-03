@@ -6,6 +6,9 @@ const { generateOTP } = require("./OTPService");
 const { sendMail } = require("./EmailService");
 const checkin = require("../model/checkin");
 const work_day = require("../model/work_day");
+
+const EMPLOYEE_PAGE_SIZE = process.env.EMPLOYEE_PAGE_SIZE;
+
 class AccountService {
   async createUser(user) {
     try {
@@ -234,49 +237,82 @@ class AccountService {
     }
   }
 
-  async getAllUsers() {
+  async getAllUsers(page) {
     try {
-      const allAccount = await accounts.aggregate([
-        {
-          $lookup: {
-            from: "users",
-            localField: "user",
-            foreignField: "_id",
-            as: "user",
+      const Npage = parseInt(page);
+      const skip = (Npage - 1) * EMPLOYEE_PAGE_SIZE;
+      const allAccount = await accounts
+        .aggregate([
+          {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "user",
+            },
           },
-        },
-        {
-          $unwind: "$user",
-        },
-        {
-          $match: {
-            "user.enable": true,
+          {
+            $unwind: "$user",
           },
-        },
-        {
-          $project: {
-            password: 0,
-            one_time_password: 0,
-            otp_requested_time: 0,
+          {
+            $match: {
+              "user.enable": true,
+            },
           },
-        },
-      ]);
+          {
+            $project: {
+              password: 0,
+              one_time_password: 0,
+              otp_requested_time: 0,
+            },
+          },
+        ])
+        .skip(skip)
+        .limit(parseInt(EMPLOYEE_PAGE_SIZE));
+      const length = await users.countDocuments({
+        enable: true,
+      });
       return {
         success: true,
-        status: 200,
         data: allAccount,
+        size: length,
       };
     } catch (err) {
       console.log(err);
       return {
         success: false,
-        status: 500,
         message: "An error occurred",
       };
     }
   }
-  async SearchActiveAccount(key) {
+  async SearchActiveAccount(key, page) {
     const translate = key.replace(/\+/g, " ");
+    const Npage = parseInt(page);
+    const skip = (Npage - 1) * EMPLOYEE_PAGE_SIZE;
+    const countQuery = await accounts.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $match: {
+          $or: [
+            { email: { $regex: translate, $options: "i" } },
+            { "user.name": { $regex: translate, $options: "i" } },
+          ],
+          "user.enable": true,
+        },
+      },
+    ]).count("count");
+    
+    const totalMatchingCount = countQuery.length > 0 ? countQuery[0].count : 0;
     const findAccounts = await accounts.aggregate([
       {
         $lookup: {
@@ -305,13 +341,41 @@ class AccountService {
           otp_requested_time: 0,
         },
       },
-    ]);
+    ]).skip(skip).limit(parseInt(EMPLOYEE_PAGE_SIZE));
 
-    return findAccounts;
+    return {
+      totalMatchingCount,
+      result: findAccounts,
+    };
   }
 
-  async SearchUnactiveAccount(key) {
+  async SearchUnactiveAccount(key, page) {
     const translate = key.replace(/\+/g, " ");
+    const Npage = parseInt(page);
+    const skip = (Npage - 1) * (parseInt(EMPLOYEE_PAGE_SIZE));
+    const countQuery = await accounts.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $match: {
+          $or: [
+            { email: { $regex: translate, $options: "i" } },
+            { "user.name": { $regex: translate, $options: "i" } },
+          ],
+          "user.enable": false,
+        },
+      },
+    ]).count("count");
+    const totalMatchingCount = countQuery.length > 0 ? countQuery[0].count : 0;
     const findAccounts = await accounts.aggregate([
       {
         $lookup: {
@@ -327,7 +391,7 @@ class AccountService {
       {
         $match: {
           $or: [
-            { "user.email": { $regex: translate, $options: "i" } },
+            { email: { $regex: translate, $options: "i" } },
             { "user.name": { $regex: translate, $options: "i" } },
           ],
           "user.enable": false,
@@ -340,13 +404,17 @@ class AccountService {
           otp_requested_time: 0,
         },
       },
-    ]);
+    ]).skip(skip).limit(parseInt(EMPLOYEE_PAGE_SIZE));
 
-    return findAccounts;
+    return {
+      data: findAccounts,
+      size: totalMatchingCount
+    };
   }
 
-  async getAllOldUsers() {
+  async getAllOldUsers(page) {
     try {
+      const skip = (page-1)*EMPLOYEE_PAGE_SIZE
       const allAccount = await accounts.aggregate([
         {
           $lookup: {
@@ -371,12 +439,15 @@ class AccountService {
             otp_requested_time: 0,
           },
         },
-      ]);
-
+      ]).skip(skip).limit((parseInt(EMPLOYEE_PAGE_SIZE)));
+      const length = await users.countDocuments({
+        enable: false,
+      });
       return {
         success: true,
         status: 200,
         data: allAccount,
+        size: length
       };
     } catch (err) {
       console.log(err);
@@ -456,8 +527,7 @@ class AccountService {
               role: role,
             }
           );
-        }
-        else{
+        } else {
           await accounts.updateOne(
             { _id: _id },
             {

@@ -149,10 +149,10 @@ async function DownloadPersonalbyDate(start, end) {
   }
 }
 // get all employees workday
-async function getStatisticall(month) {
+async function getStatisticall(month, page) {
   try {
     const role = getRole();
-    const response = await fetch(`${url}/all/${month}`, {
+    const response = await fetch(`${url}/all/${month}/${page}`, {
       method: "get",
       headers: {
         "Content-Type": "application/json",
@@ -165,6 +165,8 @@ async function getStatisticall(month) {
         success: true,
         detail: data.data.detail,
         summary: data.data.summary,
+        size:data.data.size,
+        empSize:data.data.empSize
       };
     } else {
       const data = await response.json();
@@ -237,10 +239,10 @@ async function getWorkdayByEmail(email, month) {
 }
 
 //get all employee workday with period
-async function MgetAllbyDate(start, end) {
+async function MgetAllbyDate(page, start, end) {
   try {
     const role = getRole();
-    const response = await fetch(`${url}/all-period/${start}/${end}`, {
+    const response = await fetch(`${url}/all-period/${start}/${end}/${page}`, {
       method: "get",
       headers: {
         "Content-Type": "application/json",
@@ -254,6 +256,8 @@ async function MgetAllbyDate(start, end) {
         success: true,
         detail: data.detail,
         summary: data.summary,
+        size:data.size,
+        empSize:data.empSize
       };
     } else {
       const data = await response.json();

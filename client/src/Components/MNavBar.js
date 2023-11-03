@@ -76,7 +76,7 @@ function Mnavbar() {
               </span>
             </Link>
           </div>
-          <div className="flex md:order-2 w-[164px] justify-end">
+          <div className="md:order-2">
             <div>
               <Link
                 onClick={toggleUserDropdown}

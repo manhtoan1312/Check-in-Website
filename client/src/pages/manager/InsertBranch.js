@@ -23,7 +23,7 @@ export default function InsertBranch() {
   };
 
   const handleClose = () => {
-    setType('')
+    setType("");
   };
   const insertLocation = async (e) => {
     e.preventDefault();
@@ -31,19 +31,18 @@ export default function InsertBranch() {
       branch: location.branch,
       Coordinate: {
         Latitude: location.Latitude,
-        Longitude: location.Longitude
+        Longitude: location.Longitude,
       },
-      address: location.address
+      address: location.address,
+    };
+    const result = await AddLocation(locate);
+    if (result.success) {
+      setType("SUCCESS");
+      setChange(false);
+    } else {
+      setType("ERROR");
     }
-    const result = await AddLocation(locate)
-    if(result.success){
-      setType('SUCCESS')
-      setChange(false)
-    }
-    else{
-      setType('ERROR')
-    }
-    setMessage(result.message)
+    setMessage(result.message);
   };
   const getLocation = () => {
     if ("geolocation" in navigator) {
@@ -68,13 +67,13 @@ export default function InsertBranch() {
         "The browser you are using does not support the coordinate retrieval service we use"
       );
     }
-  }
+  };
   return (
     <div className="w-full h-full bg-[#CBEFF6] flex justify-center">
       {type && (
         <ToastMessage type={type} message={message} hide={handleClose} />
       )}
-      
+
       <div className="h-full md:w-[700px] w-[400px] bg-white flex justify-center">
         <div className="w-[800px] h-[600px] flex items-center flex-col">
           <div className="p-2 ml-5 w-full text-lg  ">
@@ -192,7 +191,6 @@ export default function InsertBranch() {
           </form>
         </div>
       </div>
-      
     </div>
   );
 }

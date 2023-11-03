@@ -3,10 +3,11 @@ const LocationService = require("../service/LocationService");
 module.exports = {
   getAllLocation: async (req, res) => {
     try {
+      const page = req.params.page;
       const locationService = new LocationService();
-      const result = await locationService.getAllLocation();
+      const result = await locationService.getAllLocation(page);
       if (result?.success) {
-        res.status(200).json(result?.data);
+        res.status(200).json({data: result?.data, size:result?.size});
         return;
       } else {
         res.status(400).json({ success: false, message: result?.message });
@@ -104,12 +105,11 @@ module.exports = {
     try {
       const role = req.user.role;
       if (role == "MANAGER") {
-        const key = req.params.key;
+        const {key, page} = req.params;
         const locationService = new LocationService();
-        const result = await locationService.searchLocation(key);
+        const result = await locationService.searchLocation(key,page);
         res.status(result.status).json({
-          success: result?.success,
-          message: result?.message,
+          result
         });
       } else {
         res.status(403).json({

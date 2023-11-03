@@ -135,8 +135,8 @@ function Statistic() {
     );
   }
   return (
-    <div className="w-full lg:px-52 px-3">
-      <div className="w-full pt-20 flex md:flex-row flex-col-reverse justify-end md:gap-4 gap-2">
+    <div className="w-full lg:px-48 px-3">
+      <div className="w-full pt-16 flex md:flex-row flex-col-reverse justify-end md:gap-4 gap-2">
         <div className="w-full flex justify-end">
         <div className="relative md:inline-block w-32 text-left" ref={dropdownRef}>
           <div

@@ -2,10 +2,10 @@ import getRole from "./RoleService";
 
 const uri = "http://192.168.114.211:9000/location";
 
-const GetAllLocation = async () => {
+const GetAllLocation = async (page) => {
   try {
     const role = getRole();
-    const response = await fetch(`${uri}`, {
+    const response = await fetch(`${uri}/${page}`, {
       method: "get",
       headers: {
         "Content-type": "application/json",
@@ -16,7 +16,9 @@ const GetAllLocation = async () => {
     if (response.status === 200) {
       return {
         success: true,
-        data: data,
+        data: data.data,
+        size:data.size
+
       };
     } else {
       return { success: false, message: data.message };
@@ -88,10 +90,10 @@ const DeleteLocation = async (id) => {
   }
 };
 
-const SearchLocation = async (key) => {
+const SearchLocation = async (key,page) => {
   try {
     const role = getRole();
-    const response = await fetch(`${uri}/search/${key}`, {
+    const response = await fetch(`${uri}/search/${key}/${page}`, {
       method: "get",
       headers: {
         "Content-type": "application/json",
@@ -99,7 +101,7 @@ const SearchLocation = async (key) => {
       },
     });
     const data = await response.json();
-    return data;
+    return data.result;
   } catch (err) {
     console.log(err);
     return { success: false, message: "Client Error" };

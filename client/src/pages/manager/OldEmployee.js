@@ -29,8 +29,12 @@ export default function OldEmployee() {
   const [itemToRestore, setItemToRestore] = useState(null);
   const [desc, setDesc] = useState("");
   const [title, setTitle] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [key, setKey] = useState("");
   const dropdownRef = useRef(null);
-
+  const tableRef = useRef(null);
+  const [size, setSize] = useState(0);
+  const [page, setPage] = useState(1);
   useEffect(() => {
     fetchData();
     const handleClickOutside = (e) => {
@@ -44,10 +48,41 @@ export default function OldEmployee() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tableRef.current) {
+      const handleTableScroll = () => {
+        const table = tableRef.current;
+        const isAtBottom =
+          table.scrollTop + table.clientHeight >= table.scrollHeight;
+        if (isAtBottom && !loading && oldEmployees.length < size) {
+          setLoading(true);
+          if (key === "") {
+            fetchData();
+          } else {
+            searchNext();
+          }
+        }
+      };
+      tableRef.current.addEventListener("scroll", handleTableScroll);
+      return () => {
+        if (tableRef.current) {
+          tableRef.current.removeEventListener("scroll", handleTableScroll);
+        }
+      };
+    }
+  }, [loading, oldEmployees, size, tableRef, key]);
+
+  useEffect(() => {
+    filterEmployeesByRole(role);
+  }, [role, oldEmployees]);
+
   const fetchData = async () => {
-    const rs = await GetOldEmployee();
+    const rs = await GetOldEmployee(page);
+    setLoading(false);
     if (rs.success) {
-      setOldEmployees(rs.data);
+      setOldEmployees([...oldEmployees, ...rs.data]);
+      setSize(rs.size);
+      setPage(page + 1);
     } else {
       setTitle("TMA CHECKIN ANNOUNCEMENT");
       setDesc(rs.message);
@@ -66,16 +101,50 @@ export default function OldEmployee() {
   };
 
   useEffect(() => {
-    filterEmployeesByRole(role);
-  }, [role, oldEmployees]);
+    if (selectAll) {
+      const allEmployeeIds = filteredEmployees.map((item) => item._id);
+      setCheckArr(allEmployeeIds);
+    } else {
+      setCheckArr([]);
+    }
+  }, [selectAll, filteredEmployees]);
+
+  const searchNext = async () => {
+    console.log(key)
+    const rs = await SearchUnactiveEmployees(key, page);
+    setLoading(false);
+    if (rs.success) {
+      setOldEmployees([...oldEmployees, ...rs.data]);
+      setPage(page + 1);
+    } else {
+      setTitle("TMA CHECKIN ANNOUNCEMENT");
+      setDesc(rs?.message);
+    }
+  };
 
   const handleSearch = async (e) => {
+    const searchTerm = e.target.value;
+    setKey(searchTerm);
+    setOldEmployees([]);
+    setSize(0);
+    setPage(1);
     if (e.target.value === "") {
-      fetchData();
-    } else {
-      const rs = await SearchUnactiveEmployees(e.target.value);
+      const rs = await GetOldEmployee(1);
+      setLoading(false);
       if (rs.success) {
-        setOldEmployees(rs.result);
+        setOldEmployees(rs.data);
+        setSize(rs.size);
+        setPage(2);
+      } else {
+        setTitle("TMA CHECKIN ANNOUNCEMENT");
+        setDesc(rs.message);
+      }
+    } else {
+      const rs = await SearchUnactiveEmployees(searchTerm, 1);
+      if (rs.success) {
+        setOldEmployees(rs.data);
+        setSize(rs.size);
+        setPage(2);
       } else {
         setTitle("TMA CHECKIN ANNOUNCEMENT");
         setDesc(rs?.message);
@@ -99,12 +168,6 @@ export default function OldEmployee() {
   };
 
   const handleSelectAll = () => {
-    if (selectAll) {
-      setCheckArr([]);
-    } else {
-      const allEmployeeIds = filteredEmployees.map((item) => item._id);
-      setCheckArr(allEmployeeIds);
-    }
     setSelectAll(!selectAll);
   };
 
@@ -154,7 +217,9 @@ export default function OldEmployee() {
   };
   const deleteCheckArr = async () => {
     if (checkArr.length > 0) {
-      const restorePromises = checkArr.map((item) => PermanentlydeleteEmployee(item));
+      const restorePromises = checkArr.map((item) =>
+        PermanentlydeleteEmployee(item)
+      );
       const results = await Promise.all(restorePromises);
       if (results.every((result) => result.success)) {
         return "Successful deleted";
@@ -171,15 +236,21 @@ export default function OldEmployee() {
       fetchData();
     }
   };
-  const handleDeleteOptionClick = async (item) => {
+  const handleDeleteOptionClick = async (index, item) => {
     setItemToDelete(item);
     setTitle(`CONFIRM PERMANENTLY DELETE EMPLOYEE`);
     setDesc(`Are you sure you want to permanently delete email ${item.email}?`);
+    const updatedOptionStates = [...isOptionOpen];
+    updatedOptionStates[index] = false;
+    setIsOptionOpen(updatedOptionStates);
   };
-  const handleRestoreOptionClick = async (item) => {
+  const handleRestoreOptionClick = async (index, item) => {
     setItemToRestore(item);
     setTitle(`CONFIRM RESTORE EMPLOYEE`);
     setDesc(`Are you sure you want to restore email ${item.email}?`);
+    const updatedOptionStates = [...isOptionOpen];
+    updatedOptionStates[index] = false;
+    setIsOptionOpen(updatedOptionStates);
   };
   return (
     <div className="md:px-20 px-5">
@@ -258,6 +329,7 @@ export default function OldEmployee() {
                 className="pl-10 pr-4 py-2 border rounded-lg w-full"
                 placeholder="Search employee or email..."
                 onChange={(e) => handleSearch(e)}
+                value={key}
               />
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 -mt-0.5">
                 <FontAwesomeIcon icon={faSearch} />
@@ -266,7 +338,10 @@ export default function OldEmployee() {
           </div>
         </div>
       </div>
-      <div className="relative overflow-x-auto max-h-[500px] min-h-[200px] mt-5">
+      <div
+        className="relative overflow-x-auto max-h-[500px] min-h-[200px] mt-5"
+        ref={tableRef}
+      >
         <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 mb-10">
           <thead className="text-xs text-gray-700 sticky top-0 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
@@ -389,7 +464,7 @@ export default function OldEmployee() {
                       <div
                         className="text-gray-700 hover:bg-gray-100 cursor-pointer px-4 py-2"
                         onClick={() => {
-                          handleDeleteOptionClick(item);
+                          handleDeleteOptionClick(index, item);
                         }}
                       >
                         Delete
@@ -397,7 +472,7 @@ export default function OldEmployee() {
                       <div
                         className="text-gray-700 hover-bg-gray-100 cursor-pointer px-4 py-2"
                         onClick={() => {
-                          handleRestoreOptionClick(item);
+                          handleRestoreOptionClick(index, item);
                         }}
                       >
                         Restore
