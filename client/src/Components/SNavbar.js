@@ -63,7 +63,7 @@ function Snavbar() {
           <div className="flex flex-row h-full items-center ">
             <div className="h-full flex justify-center items-center pr-2">
               <FontAwesomeIcon
-                className="text-[#1C348A] h-[30px] w-[30px] cursor-pointer"
+                className="text-[#1C348A] h-[30px] w-[30px] cursor-pointer flex md:hidden"
                 onClick={ActiveSlidebar}
                 icon={faBars}
                 ref={slideRef}
