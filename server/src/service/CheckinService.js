@@ -72,7 +72,7 @@ class CheckinService {
       //checking in in a valid area
       if (check) {
         const now = new Date();
-        let time = now.getHours();
+        let time = now.getHours()+7;
         let timecheckin;
         let fine;
         let message = `Check in successfully at ${check_location}`;

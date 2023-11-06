@@ -1,6 +1,6 @@
 import getRole from "./RoleService";
 
-const url = "http://192.168.114.211:9000";
+const url = "https://check-in-website.onrender.com";
 
 const checkin = async (latitude, longitude) => {
   try {

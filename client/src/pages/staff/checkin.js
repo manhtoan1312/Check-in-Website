@@ -68,7 +68,10 @@ function Checkin() {
       </button>
       {result && (
         <div className="h-[300px] text-lg bg-white md:text-[24px] flex items-center md:pl-20 pl-4 text-gray-700 md:w-[800px] w-full rounded-[60px] border-[#676767] border-2 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <p className="md:text-lg text-base" dangerouslySetInnerHTML={createMarkup()} />
+          <p
+            className="md:text-lg text-base"
+            dangerouslySetInnerHTML={createMarkup()}
+          />
         </div>
       )}
       {!available && (
