@@ -103,7 +103,6 @@ class CheckinService {
                       : 0,
 
                 };
-                console.log(usercheckin)
                 const newcheckin = await checkin.create(usercheckin);
                 timecheckin = newcheckin.time;
                 fine = newcheckin.fee;
