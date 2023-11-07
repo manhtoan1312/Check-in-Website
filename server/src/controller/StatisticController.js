@@ -96,6 +96,7 @@ module.exports = {
       let start = new Date(req.params.start);
       start.setDate(start.getDate()-1);
       let end = new Date(req.params.end);
+      end.setDate(end.getDate()+1);
       const statisticService = new StatisticService();
       const result = await statisticService.getPersonalWorkday(
         email,
