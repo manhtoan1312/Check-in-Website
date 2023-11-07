@@ -123,7 +123,6 @@ class StatisticService {
           })
           .skip(skip)
           .limit(STATISTIC_PAGE_SIZE);
-        //console.log(workDaysInMonth)
         const workDaysInMonth2 = await work_day
           .find({
             day: {
