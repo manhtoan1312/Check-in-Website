@@ -106,22 +106,7 @@ class StatisticService {
       const enabledUsers = await users.find({ enable: true });
       if (enabledUsers) {
         let workDaysInMonth;
-        if (page === 0) {
-          workDaysInMonth = await work_day
-            .find({
-              day: {
-                $gte: startDate,
-                $lt: endDate,
-              },
-            })
-            .populate({
-              path: "checkin",
-              populate: {
-                path: "employee",
-                model: "accounts",
-              },
-            });
-        } else {
+        if (page !== 0) {
           const npage = parseInt(page);
           const skip = (npage - 1) * STATISTIC_PAGE_SIZE;
           workDaysInMonth = await work_day
@@ -137,9 +122,23 @@ class StatisticService {
                 path: "employee",
                 model: "accounts",
               },
+            }).skip(skip)
+            .limit(STATISTIC_PAGE_SIZE);;
+        } else {
+          workDaysInMonth = await work_day
+            .find({
+              day: {
+                $gte: startDate,
+                $lt: endDate,
+              },
             })
-            .skip(skip)
-            .limit(STATISTIC_PAGE_SIZE);
+            .populate({
+              path: "checkin",
+              populate: {
+                path: "employee",
+                model: "accounts",
+              },
+            })
         }
         const workDaysInMonth2 = await work_day
           .find({
