@@ -104,6 +104,7 @@ class StatisticService {
       const startDate = start ? start : new Date(year, month - 1);
       const endDate = end ? end : new Date(year, month);
       const enabledUsers = await users.find({ enable: true });
+      console.log(page)
       if (enabledUsers) {
         let workDaysInMonth;
         if (page !== 0) {
