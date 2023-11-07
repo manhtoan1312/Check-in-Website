@@ -107,7 +107,10 @@ class StatisticService {
       const npage = parseInt(page);
       const skip = (npage - 1) * STATISTIC_PAGE_SIZE;
       if (enabledUsers) {
-        const workDaysInMonth = await work_day
+        let workDaysInMonth
+        if(npage!==0)
+        {
+          workDaysInMonth = await work_day
           .find({
             day: {
               $gte: startDate,
@@ -123,6 +126,23 @@ class StatisticService {
           })
           .skip(skip)
           .limit(STATISTIC_PAGE_SIZE);
+        }
+        else{
+          workDaysInMonth = await work_day
+          .find({
+            day: {
+              $gte: startDate,
+              $lt: endDate,
+            },
+          })
+          .populate({
+            path: "checkin",
+            populate: {
+              path: "employee",
+              model: "accounts",
+            },
+          })
+        }
         const workDaysInMonth2 = await work_day
           .find({
             day: {
@@ -393,7 +413,7 @@ class StatisticService {
 
   async ExportExcelFileForAllEmployees(month, start, end) {
     try {
-      const result = await this.getMonthlyStatistics(month, start, end);
+      const result = await this.getMonthlyStatistics(month,0, start, end);
       if (result.success && result?.data) {
         const detail = result.data.detail;
         const summary = result.data.summary;
