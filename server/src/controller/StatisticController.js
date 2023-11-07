@@ -70,7 +70,7 @@ module.exports = {
     const user = req.user;
     let email = user.email;
     let start = new Date(req.params.start);
-    start.setDate(start.getDate()-1);
+    
     let end = new Date(req.params.end);
     end.setDate(end.getDate()+1);
     const statisticService = new StatisticService();
@@ -94,7 +94,7 @@ module.exports = {
     if (user.role == "MANAGER") {
       let email = req.params.email;
       let start = new Date(req.params.start);
-      start.setDate(start.getDate()-1);
+      
       let end = new Date(req.params.end);
       end.setDate(end.getDate()+1);
       const statisticService = new StatisticService();
@@ -124,7 +124,7 @@ module.exports = {
     const user = req.user;
     if (user.role == "MANAGER") {
       let start = new Date(req.params.start);
-      start.setDate(start.getDate()-1);
+      
       let end = new Date(req.params.end);
       end.setDate(end.getDate()+1);
       console.log(end)
@@ -198,7 +198,7 @@ module.exports = {
     try {
       let email = req.user.email;
       let start = new Date(req.params.start);
-      start.setDate(start.getDate()-1);
+      
       let end = new Date(req.params.end);
       end.setDate(end.getDate()+1);
       const statisticService = new StatisticService();
@@ -242,7 +242,7 @@ module.exports = {
     try {
       let email = req.params.email;
       let start = new Date(req.params.start);
-      start.setDate(start.getDate()-1);
+      
       let end = new Date(req.params.end);
       end.setDate(end.getDate()+1);
       const statisticService = new StatisticService();
@@ -332,7 +332,7 @@ module.exports = {
       const user = req.user;
       if (user.role == "MANAGER") {
         let start = new Date(req.params.start);
-        start.setDate(start.getDate()-1);
+        
         let end = new Date(req.params.end);
         end.setDate(end.getDate()+1);
         const statisticService = new StatisticService();
