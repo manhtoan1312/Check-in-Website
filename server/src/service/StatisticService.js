@@ -108,7 +108,7 @@ class StatisticService {
       const skip = (npage - 1) * STATISTIC_PAGE_SIZE;
       if (enabledUsers) {
         let workDaysInMonth
-        if(npage!==0)
+        if(page === 0)
         {
           workDaysInMonth = await work_day
           .find({
@@ -124,8 +124,7 @@ class StatisticService {
               model: "accounts",
             },
           })
-          .skip(skip)
-          .limit(STATISTIC_PAGE_SIZE);
+          
         }
         else{
           workDaysInMonth = await work_day
@@ -141,7 +140,8 @@ class StatisticService {
               path: "employee",
               model: "accounts",
             },
-          })
+          }).skip(skip)
+          .limit(STATISTIC_PAGE_SIZE);
         }
         const workDaysInMonth2 = await work_day
           .find({
@@ -414,7 +414,8 @@ class StatisticService {
   async ExportExcelFileForAllEmployees(month, start, end) {
     try {
       const result = await this.getMonthlyStatistics(month,0, start, end);
-      if (result.success && result?.data) {
+      console.log(result)
+      if (result?.success && result?.data) {
         const detail = result.data.detail;
         const summary = result.data.summary;
         const workbook = new ExcelJS.Workbook();
