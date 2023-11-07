@@ -107,7 +107,6 @@ class StatisticService {
       if (enabledUsers) {
         let workDaysInMonth;
         if (page == 0) {
-          console.log('bang 0')
           workDaysInMonth = await work_day
             .find({
               day: {
@@ -121,10 +120,9 @@ class StatisticService {
                 path: "employee",
                 model: "accounts",
               },
-            })
+            });
         } else {
           const npage = parseInt(page);
-          console.log('khac 0')
           const skip = (npage - 1) * STATISTIC_PAGE_SIZE;
           workDaysInMonth = await work_day
             .find({
@@ -139,7 +137,8 @@ class StatisticService {
                 path: "employee",
                 model: "accounts",
               },
-            }).skip(skip)
+            })
+            .skip(skip)
             .limit(STATISTIC_PAGE_SIZE);
         }
         const workDaysInMonth2 = await work_day
@@ -292,11 +291,16 @@ class StatisticService {
   async getMonthlyStatistics2(workDaysInMonth, page) {
     try {
       const monthlyStatistics = [];
-      const skip = (page - 1) * EMPLOYEE_PAGE_SIZE;
-      const enabledUsers = await users
-        .find({ enable: true })
-        .skip(skip)
-        .limit(EMPLOYEE_PAGE_SIZE);
+      let enabledUsers;
+      if (page === 0) {
+        enabledUsers = await users.find({ enable: true });
+      } else {
+        const skip = (page - 1) * EMPLOYEE_PAGE_SIZE;
+        enabledUsers = await users
+          .find({ enable: true })
+          .skip(skip)
+          .limit(EMPLOYEE_PAGE_SIZE);
+      }
 
       const lenght = await users.find({ enable: true }).countDocuments();
       for (const user of enabledUsers) {
@@ -412,7 +416,7 @@ class StatisticService {
 
   async ExportExcelFileForAllEmployees(month, start, end) {
     try {
-      const page=0;
+      const page = 0;
       const result = await this.getMonthlyStatistics(month, page, start, end);
       if (result?.success && result?.data) {
         const detail = result.data.detail;

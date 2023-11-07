@@ -289,7 +289,7 @@ async function MDownloadPbyDate(email, start, end) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `statistic_${role.email}_${start}-${end}.xlsx`;
+      a.download = `statistic_${email}_${start}-${end}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
