@@ -107,7 +107,7 @@ class StatisticService {
       if (enabledUsers) {
         let workDaysInMonth;
         if (page == 0) {
-          console.log('hi')
+          console.log('bang 0')
           workDaysInMonth = await work_day
             .find({
               day: {
@@ -124,6 +124,7 @@ class StatisticService {
             })
         } else {
           const npage = parseInt(page);
+          console.log('khac 0')
           const skip = (npage - 1) * STATISTIC_PAGE_SIZE;
           workDaysInMonth = await work_day
             .find({
@@ -413,7 +414,6 @@ class StatisticService {
     try {
       const page=0;
       const result = await this.getMonthlyStatistics(month, page, start, end);
-      console.log(result);
       if (result?.success && result?.data) {
         const detail = result.data.detail;
         const summary = result.data.summary;
