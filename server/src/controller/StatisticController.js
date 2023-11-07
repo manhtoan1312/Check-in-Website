@@ -126,6 +126,8 @@ module.exports = {
       let start = new Date(req.params.start);
       start.setDate(start.getDate()-1);
       let end = new Date(req.params.end);
+      end.setDate(end.getDate()+1);
+      console.log(end)
       const page = parseInt(req.params.page)
       const statisticService = new StatisticService();
       const result = await statisticService.getMonthlyStatistics(
@@ -198,6 +200,7 @@ module.exports = {
       let start = new Date(req.params.start);
       start.setDate(start.getDate()-1);
       let end = new Date(req.params.end);
+      end.setDate(end.getDate()+1);
       const statisticService = new StatisticService();
       const result = await statisticService.exportPersonalExcelFile(
         email,
@@ -241,6 +244,7 @@ module.exports = {
       let start = new Date(req.params.start);
       start.setDate(start.getDate()-1);
       let end = new Date(req.params.end);
+      end.setDate(end.getDate()+1);
       const statisticService = new StatisticService();
       const result = await statisticService.exportPersonalExcelFile(
         email,
@@ -330,6 +334,7 @@ module.exports = {
         let start = new Date(req.params.start);
         start.setDate(start.getDate()-1);
         let end = new Date(req.params.end);
+        end.setDate(end.getDate()+1);
         const statisticService = new StatisticService();
         const result = await statisticService.ExportExcelFileForAllEmployees(
           0,
