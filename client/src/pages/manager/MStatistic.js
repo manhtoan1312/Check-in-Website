@@ -272,7 +272,8 @@ export default function MStatisitc() {
 
   useEffect(() => {
     const monthIndex = months.findIndex((item) => item === month);
-
+    setDetail([])
+    setSummay([])
     if (emailSelected == "all") {
       getAllWorkday(monthIndex + 1);
     } else {

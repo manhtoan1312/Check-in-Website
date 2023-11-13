@@ -191,6 +191,7 @@ const EmpTable = ({ employees, firstItemRef }) => {
               </td>
             </tr>
           ))}
+          
         </tbody>
       </table>
     </div>

@@ -151,7 +151,9 @@ const Employees = () => {
           ref={tableRef}
           className="overflow-x-auto max-h-[500px] min-h-[200px] mt-5"
         >
+          
           <EmpTable employees={employees} firstItemRef={firstItemRef}/>
+
         </div>
       </div>
     </div>

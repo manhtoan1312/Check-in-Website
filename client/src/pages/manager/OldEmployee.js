@@ -107,10 +107,10 @@ export default function OldEmployee() {
     } else {
       setCheckArr([]);
     }
-  }, [selectAll, filteredEmployees]);
+  }, [selectAll]);
 
   const searchNext = async () => {
-    console.log(key)
+    console.log(key);
     const rs = await SearchUnactiveEmployees(key, page);
     setLoading(false);
     if (rs.success) {

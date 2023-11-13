@@ -124,7 +124,6 @@ module.exports = {
     const user = req.user;
     if (user.role == "MANAGER") {
       let start = new Date(req.params.start);
-      
       let end = new Date(req.params.end);
       end.setDate(end.getDate()+1);
       console.log(end)
