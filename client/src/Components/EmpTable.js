@@ -51,7 +51,7 @@ const EmpTable = ({ employees, firstItemRef }) => {
   const submitDelete = async () => {
     const result = await deleteEmployee(itemToDelete._id);
     if (result.success) {
-      setTitle("TMA CHECKIN ANNOUNCEMENT");
+      setTitle("WORK TRACKER ANNOUNCEMENT");
       setDesc(result.message);
     } else {
       setTitle("ACTION FAILED");
@@ -63,7 +63,7 @@ const EmpTable = ({ employees, firstItemRef }) => {
   };
   const handleCancel = () => {
     setDesc("");
-    if (title === "TMA CHECKIN ANNOUNCEMENT") {
+    if (title === "WORK TRACKER ANNOUNCEMENT") {
       window.location.reload();
     }
   };

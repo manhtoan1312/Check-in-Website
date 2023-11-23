@@ -65,7 +65,7 @@ export default function SlideBar() {
         </li>
       </ul>
       <span className="self-center md:pt-[430px] pt-[380px] text-[#1C348A] text-3xl font-bold whitespace-nowrap dark:text-white">
-        TMA CHECKIN
+       WORK TRACKER
       </span>
     </aside>
   );

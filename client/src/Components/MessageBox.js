@@ -30,7 +30,7 @@ export default function MessageBox({confirm, cancel, title, description}) {
       <div className="md:w-[400px] w-80 bg-white rounded-lg absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] text-center text-blue-500">
         <div className=" flex items-center justify-center mt-[-20px] ">
           <h2 className="text-white flex items-center justify-center bg-blue-400 md:w-[300px] w-60  rounded-2xl h-11 font-bold">
-            TMA Check In Announce
+            WORK TRACKER Announce
           </h2>
         </div>
         <div className="flex items-center justify-center">

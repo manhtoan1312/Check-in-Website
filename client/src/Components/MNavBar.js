@@ -72,7 +72,7 @@ function Mnavbar() {
             </div>
             <Link to="/checkin" className="flex items-center">
               <span className="self-center text-[#1C348A] text-2xl font-bold whitespace-nowrap dark:text-white">
-                TMA CHECKIN
+                WORK TRACKER
               </span>
             </Link>
           </div>

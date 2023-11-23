@@ -85,7 +85,7 @@ const UpdateEmployee = () => {
           show={true}
           confirm={confirmUpdate}
           cancel={cancelUpdate}
-          title="TMA CHECKIN ANNOUNCE:"
+          title="WORK TRACKER ANNOUNCE:"
           description={message}
         />
       )}

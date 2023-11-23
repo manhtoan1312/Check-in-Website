@@ -13,7 +13,6 @@ function UpdateBranch() {
   const [change, setChange] = useState(false);
   const [type, setType] = useState("");
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const handleBranchChange = (e) => {
     const { name, value } = e.target;

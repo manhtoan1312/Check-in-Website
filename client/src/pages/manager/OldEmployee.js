@@ -84,7 +84,7 @@ export default function OldEmployee() {
       setSize(rs.size);
       setPage(page + 1);
     } else {
-      setTitle("TMA CHECKIN ANNOUNCEMENT");
+      setTitle("WORK TRACKER ANNOUNCEMENT");
       setDesc(rs.message);
     }
   };
@@ -117,7 +117,7 @@ export default function OldEmployee() {
       setOldEmployees([...oldEmployees, ...rs.data]);
       setPage(page + 1);
     } else {
-      setTitle("TMA CHECKIN ANNOUNCEMENT");
+      setTitle("WORK TRACKER ANNOUNCEMENT");
       setDesc(rs?.message);
     }
   };
@@ -136,7 +136,7 @@ export default function OldEmployee() {
         setSize(rs.size);
         setPage(2);
       } else {
-        setTitle("TMA CHECKIN ANNOUNCEMENT");
+        setTitle("WORK TRACKER ANNOUNCEMENT");
         setDesc(rs.message);
       }
     } else {
@@ -146,7 +146,7 @@ export default function OldEmployee() {
         setSize(rs.size);
         setPage(2);
       } else {
-        setTitle("TMA CHECKIN ANNOUNCEMENT");
+        setTitle("WORK TRACKER ANNOUNCEMENT");
         setDesc(rs?.message);
       }
     }
@@ -174,33 +174,33 @@ export default function OldEmployee() {
   const submitDelete = async () => {
     const result = await PermanentlydeleteEmployee(itemToDelete._id);
     if (result.success) {
-      setTitle("TMA CHECKIN ANNOUNCEMENT");
+      setTitle("WORK TRACKER ANNOUNCEMENT");
       setDesc(result.message);
     } else {
-      setTitle("TMA CHECKIN ANNOUNCEMENT");
+      setTitle("WORK TRACKER ANNOUNCEMENT");
       setDesc(result.message);
     }
   };
   const submitRestore = async () => {
     const result = await RestoreEmployee(itemToRestore._id);
     if (result.success) {
-      setTitle("TMA CHECKIN ANNOUNCEMENT");
+      setTitle("WORK TRACKER ANNOUNCEMENT");
       setDesc(result.message);
     } else {
-      setTitle("TMA CHECKIN ANNOUNCEMENT");
+      setTitle("WORK TRACKER ANNOUNCEMENT");
       setDesc(result.message);
     }
   };
 
   const handleDeleteBtn = async () => {
     const message = await deleteCheckArr();
-    setTitle("TMA CHECKIN ANNOUNCEMENT");
+    setTitle("WORK TRACKER ANNOUNCEMENT");
     setDesc(message);
   };
 
   const handleRestore = async () => {
     const message = await restoreCheckArr();
-    setTitle("TMA CHECKIN ANNOUNCEMENT");
+    setTitle("WORK TRACKER ANNOUNCEMENT");
     setDesc(message);
   };
   const restoreCheckArr = async () => {
@@ -232,7 +232,7 @@ export default function OldEmployee() {
 
   const handleCancel = () => {
     setDesc("");
-    if (title === "TMA CHECKIN ANNOUNCEMENT") {
+    if (title === "WORK TRACKER ANNOUNCEMENT") {
       fetchData();
     }
   };
@@ -257,7 +257,7 @@ export default function OldEmployee() {
       {desc && (
         <MessageBox
           confirm={() => {
-            if (title === "TMA CHECKIN ANNOUNCEMENT") {
+            if (title === "WORK TRACKER ANNOUNCEMENT") {
               handleCancel();
             } else if (title === "CONFIRM PERMANENTLY DELETE EMPLOYEE") {
               submitDelete();

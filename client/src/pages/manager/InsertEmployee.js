@@ -13,7 +13,6 @@ const InsertEmployee = () => {
   const [message, setMessage] = useState("");
   let gender = ["male", "female", "Other..."];
   const role = ["STAFF", "MANAGER"];
-  const navigate = useNavigate();
   const handleInforChange = (e) => {
     const { name, value } = e.target;
     setInfor((prevValues) => ({
@@ -42,9 +41,6 @@ const InsertEmployee = () => {
     if (result.success) {
       setType("SUCCESS");
       setMessage(result.message);
-      // setTimeout(() => {
-      //   navigate("/m-employees");
-      // }, 4000);
     } else {
       setType("ERROR");
       setMessage(result.message);
