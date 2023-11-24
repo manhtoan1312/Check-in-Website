@@ -57,11 +57,11 @@ function Mnavbar() {
     setIsSlidebarOpen(!isSlidebarOpen);
   };
   return (
-    <nav className="bg-white dark:bg-gray-900  fixed  w-full md:h-[80px] h-[60px] z-20 top-0 left-0 border-b-2 border-gray-200 dark:border-gray-600">
+    <nav className="bg-white dark:bg-gray-900  fixed w-full md:h-[80px] h-[60px] z-20 top-0 left-0 border-b-2 border-gray-200 dark:border-gray-600">
       <div className="relative z-50 w-full h-full">
         <div className="max-w-screen-xl flex flex-wrap  px-4 items-center h-full justify-between mx-auto ">
-          <div className="flex flex-row h-full items-center ">
-            <div className="h-full flex justify-center items-center pr-2">
+          <div className="flex flex-row h-full  items-center ">
+            <div className="h-full flex justify-center  items-center pr-2">
               <FontAwesomeIcon
                 className="text-[#1C348A] h-[30px] w-[30px] cursor-pointer"
                 onClick={ActiveSlidebar}
@@ -84,7 +84,7 @@ function Mnavbar() {
                 type="button"
               >
                 <FontAwesomeIcon
-                  className="md:h-[30px] h-[25px]"
+                  className="md:h-[30px] h-[25px] dark:text-white"
                   icon={faUser}
                 ></FontAwesomeIcon>
               </Link>
